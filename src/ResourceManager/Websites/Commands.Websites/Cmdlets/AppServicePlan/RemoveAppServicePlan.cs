@@ -1,5 +1,4 @@
-﻿
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +22,7 @@ using System.Management.Automation;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
-using Microsoft.Azure.Commands.Websites;
+using Microsoft.Azure.Commands.WebApp;
 using Microsoft.Azure.Management.WebSites;
 using System.Net.Http;
 using System.Threading;
@@ -31,30 +30,29 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System.Net;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Commands.Websites.Utilities;
+using Microsoft.Azure.Commands.WebApp.Utilities;
 
 
-namespace Microsoft.Azure.Commands.Websites.Cmdlets
+namespace Microsoft.Azure.Commands.WebApp.Cmdlets.AppServicePlan
 {
     /// <summary>
-    /// this commandlet will let you Start an Azure Website
+    /// this commandlet will let you delete an Azure App Service Plan using ARM APIs
     /// </summary>
-    [Cmdlet(VerbsLifecycle.Start, "AzureWebsite")]
-    public class StartAzureWebsiteCmdlet : WebsiteBaseCmdlet
+    [Cmdlet(VerbsCommon.Remove, "AzureAppServicePlan"), OutputType(typeof(AzureOperationResponse))]
+    public class RemoveAppServicePlanCmdlet : AppServicePlanBaseCmdlet
     {
+        [Parameter(Mandatory = false, HelpMessage = "Do not ask for confirmation.")]
+        public SwitchParameter Force { get; set; }
 
-        [Parameter(Position = 2, Mandatory = false, HelpMessage = "The name of the website slot.")]
-        [ValidateNotNullOrEmptyAttribute]
-        public string SlotName { get; set; }
-     
         public override void ExecuteCmdlet()
         {
-            WriteObject(WebsitesClient.StartWebsite(ResourceGroupName, WebsiteName, SlotName));
-            
+            ConfirmAction(
+                    Force.IsPresent,
+                    string.Format(Microsoft.Azure.Commands.WebApp.Properties.Resources.RemovingWebHostPlan, Name),
+                    Microsoft.Azure.Commands.WebApp.Properties.Resources.RemovingWebHostPlan,
+                    Name,
+                    () => WebsitesClient.RemoveWebHostingPlan(ResourceGroupName, Name));
         }
-        
     }
 }
-
-
 

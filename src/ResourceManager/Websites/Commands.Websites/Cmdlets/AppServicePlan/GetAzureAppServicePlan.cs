@@ -22,7 +22,7 @@ using System.Management.Automation;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
-using Microsoft.Azure.Commands.Websites;
+using Microsoft.Azure.Commands.WebApp;
 using Microsoft.Azure.Management.WebSites;
 using System.Net.Http;
 using System.Threading;
@@ -30,28 +30,38 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System.Net;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Commands.Websites.Utilities;
+using Microsoft.Azure.Commands.WebApp.Utilities;
 
 
-namespace Microsoft.Azure.Commands.Websites.Cmdlets.WebHostingPlan
+namespace Microsoft.Azure.Commands.WebApp.Cmdlets.AppServicePlan
 {
     /// <summary>
-    /// this commandlet will let you delete an Azure Web Hosting Plan using ARM APIs
+    /// this commandlet will let you Get an Azure App Service Plan using ARM APIs
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureWebHostingPlan"), OutputType(typeof(AzureOperationResponse))]
-    public class RemoveWebHostingPlanCmdlet : WebHostingPlanBaseCmdlet
+    [Cmdlet(VerbsCommon.Get, "AzureAppServicePlan"), OutputType(typeof(WebHostingPlanGetResponse), typeof(WebHostingPlanListResponse))]
+    public class GetAppServicePlanCmdlet : WebHostingPlanBaseNotMandatoryCmdlet
     {
-        [Parameter(Mandatory = false, HelpMessage = "Do not ask for confirmation.")]
-        public SwitchParameter Force { get; set; }
-
         public override void ExecuteCmdlet()
         {
-            ConfirmAction(
-                    Force.IsPresent,
-                    string.Format(Microsoft.Azure.Commands.Websites.Properties.Resources.RemovingWebHostPlan, WebHostingPlanName),
-                    Microsoft.Azure.Commands.Websites.Properties.Resources.RemovingWebHostPlan,
-                    WebHostingPlanName,
-                    () => WebsitesClient.RemoveWebHostingPlan(ResourceGroupName, WebHostingPlanName));
+            if (!string.IsNullOrEmpty(ResourceGroupName) && !string.IsNullOrEmpty(Name))
+            {
+                GetByWebHostingPlan();
+            }
+            else if (!string.IsNullOrEmpty(ResourceGroupName))
+            {
+                GetByResourceGroup();
+            }
+
+        }
+
+        private void GetByWebHostingPlan()
+        {
+            WriteObject(WebsitesClient.GetWebHostingPlan(ResourceGroupName, Name));
+        }
+
+        private void GetByResourceGroup()
+        {
+            WriteObject(WebsitesClient.ListWebHostingPlan(ResourceGroupName));
         }
     }
 }

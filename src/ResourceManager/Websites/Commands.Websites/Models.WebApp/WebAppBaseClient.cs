@@ -18,35 +18,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Management.Automation;
-using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
-using Microsoft.Azure.Commands.Websites;
-using Microsoft.Azure.Management.WebSites;
-using System.Net.Http;
-using System.Threading;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using System.Net;
-using Microsoft.Azure;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Commands.Websites.Utilities;
+using Microsoft.Azure.Commands.WebApp.Utilities;
 
-
-namespace Microsoft.Azure.Commands.Websites.Cmdlets.WebHostingPlan
+namespace Microsoft.Azure.Commands.WebApp.Models
 {
-    /// <summary>
-    /// this commandlet will let you delete an Azure Web Hosting Plan using ARM APIs
-    /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureWebHostingPlan"), OutputType(typeof(WebHostingPlanGetResponse))]
-    public class GetWebHostingPlanCmdlet : WebHostingPlanBaseCmdlet
+    public abstract class WebAppBaseClientCmdLet : AzurePSCmdlet
     {
-        public override void ExecuteCmdlet()
+        private WebsitesClient _websitesClient;
+        public WebsitesClient WebsitesClient
         {
-            WriteObject(WebsitesClient.GetWebHostingPlan(ResourceGroupName, WebHostingPlanName));
-
+            get
+            {
+                if (_websitesClient == null)
+                {
+                    _websitesClient = new WebsitesClient(this.Profile.Context);
+                }
+                return _websitesClient;
+            }
+            set { _websitesClient = value; }
         }
-
     }
 }
-

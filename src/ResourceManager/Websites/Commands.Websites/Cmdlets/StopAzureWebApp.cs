@@ -23,7 +23,7 @@ using System.Management.Automation;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
-using Microsoft.Azure.Commands.Websites;
+using Microsoft.Azure.Commands.WebApp;
 using Microsoft.Azure.Management.WebSites;
 using System.Net.Http;
 using System.Threading;
@@ -31,30 +31,29 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System.Net;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Commands.Websites.Utilities;
+using Microsoft.Azure.Commands.WebApp.Utilities;
 
 
-namespace Microsoft.Azure.Commands.Websites.Cmdlets
+namespace Microsoft.Azure.Commands.WebApp.Cmdlets
 {
     /// <summary>
-    /// this commandlet will let you restart an Azure Website
+    /// this commandlet will let you stop an Azure Web app
     /// </summary>
-    [Cmdlet(VerbsLifecycle.Restart, "AzureWebsite")]
-    public class RestartAzureWebsiteCmdlet : WebsiteBaseCmdlet
+    [Cmdlet(VerbsLifecycle.Stop, "AzureWebApp")]
+    public class StopAzureWebAppCmdlet : WebAppBaseCmdlet
     {
 
-        [Parameter(Position = 2, Mandatory = false, HelpMessage = "The name of the website slot.")]
+        [Parameter(Position = 2, Mandatory = false, HelpMessage = "The name of the web app slot.")]
         [ValidateNotNullOrEmptyAttribute]
         public string SlotName { get; set; }
 
         public override void ExecuteCmdlet()
         {
-            WriteObject(WebsitesClient.RestartWebsite(ResourceGroupName, WebsiteName, SlotName));
+            WriteObject(WebsitesClient.StopWebsite(ResourceGroupName, Name, SlotName));
         }
 
     }
 }
-
 
 
 
