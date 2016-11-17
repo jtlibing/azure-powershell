@@ -23,7 +23,7 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
     /// <summary>
     /// Get AD users.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureADUser", DefaultParameterSetName = ParameterSet.Empty), OutputType(typeof(List<PSADUser>))]
+    [Cmdlet(VerbsCommon.Get, "AzureRmADUser", DefaultParameterSetName = ParameterSet.Empty), OutputType(typeof(List<PSADUser>))]
     public class GetAzureADUserCommand : ActiveDirectoryBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.SearchString,
@@ -44,6 +44,11 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
         [Alias("UPN")]
         public string UserPrincipalName { get; set; }
 
+        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.Mail,
+            HelpMessage = "The user mail.")]
+        [ValidateNotNullOrEmpty]
+        public string Mail { get; set; }
+
         public override void ExecuteCmdlet()
         {
             ADObjectFilterOptions options = new ADObjectFilterOptions
@@ -51,14 +56,18 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
                 SearchString = SearchString,
                 UPN = UserPrincipalName,
                 Id = ObjectId == Guid.Empty ? null : ObjectId.ToString(),
-                Paging = true
+                Paging = true,
+                Mail = Mail
             };
 
-            do
+            ExecutionBlock(() =>
             {
-                WriteObject(ActiveDirectoryClient.FilterUsers(options), true);
+                do
+                {
+                    WriteObject(ActiveDirectoryClient.FilterUsers(options), true);
 
-            } while (!string.IsNullOrEmpty(options.NextLink));
+                } while (!string.IsNullOrEmpty(options.NextLink));
+            });
         }
     }
 }

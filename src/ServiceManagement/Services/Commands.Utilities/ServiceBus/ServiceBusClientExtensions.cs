@@ -22,7 +22,7 @@ using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using Microsoft.ServiceBus.Notifications;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.WindowsAzure.Commands.Common.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
 using Microsoft.WindowsAzure.Management.ServiceBus;
 using Microsoft.WindowsAzure.Management.ServiceBus.Models;
@@ -30,6 +30,9 @@ using Microsoft.WindowsAzure.Management.ServiceBus.Models;
 namespace Microsoft.WindowsAzure.Commands.Utilities.ServiceBus
 {
     using ServiceBusNamespaceDescription = Management.ServiceBus.Models.NamespaceDescription;
+    using Microsoft.Azure.Commands.Common.Authentication.Models;
+    using Microsoft.Azure.Commands.Common.Authentication;
+    using Hyak.Common;
 
     public class ServiceBusClientExtensions
     {
@@ -287,11 +290,16 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.ServiceBus
         /// Creates new instance from ServiceBusClientExtensions
         /// </summary>
         /// <param name="subscription"></param>
-        public ServiceBusClientExtensions(AzureSubscription subscription)
+        public ServiceBusClientExtensions(AzureSMProfile profile)
         {
-            subscriptionId = subscription.Id.ToString();
-            Subscription = subscription;
-            ServiceBusClient = AzureSession.ClientFactory.CreateClient<ServiceBusManagementClient>(subscription, AzureEnvironment.Endpoint.ServiceManagement);
+            if (profile.Context.Subscription == null)
+            {
+                throw new ArgumentException(Resources.InvalidDefaultSubscription);
+            }
+
+            subscriptionId = profile.Context.Subscription.Id.ToString();
+            Subscription = profile.Context.Subscription;
+            ServiceBusClient = AzureSession.ClientFactory.CreateClient<ServiceBusManagementClient>(profile, profile.Context.Subscription, AzureEnvironment.Endpoint.ServiceManagement);
         }
 
         /// <summary>
@@ -835,7 +843,7 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.ServiceBus
             return GetNamespace().Exists(ns => ns.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         }
 
-        public virtual ExtendedServiceBusNamespace CreateNamespace(string name, string location, NamespaceType type, bool createACSNamespace = true)
+        public virtual ExtendedServiceBusNamespace CreateNamespace(string name, string location, NamespaceType type, bool createACSNamespace = false)
         {
             location = string.IsNullOrEmpty(location) ? GetDefaultLocation() : location;
 
@@ -933,7 +941,9 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.ServiceBus
                 rights.Add(AccessRights.Send);
             }
 
-            return new SharedAccessAuthorizationRule(sbRule.KeyName, sbRule.PrimaryKey, sbRule.SecondaryKey, rights);
+            var sasRule = new SharedAccessAuthorizationRule(sbRule.KeyName, sbRule.PrimaryKey, sbRule.SecondaryKey, rights);
+            sasRule.Revision = sbRule.Revision;
+            return sasRule;
         }
 
         static public ServiceBusConnectionDetail ToServiceBusConnectionDetail(this ServiceBusNamespaceDescription namespaceDesc)

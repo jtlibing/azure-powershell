@@ -12,32 +12,35 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Security;
 using Microsoft.Azure.Management.DataFactories;
 using Microsoft.DataTransfer.Gateway.Encryption;
+using System;
+using System.Management.Automation;
+using System.Security;
 
 namespace Microsoft.Azure.Commands.DataFactories
 {
     public partial class DataFactoryClient
     {
-        public virtual string CloudEncryptString(SecureString value, string resourceGroupName, string dataFactoryName)
+        public virtual string OnPremisesEncryptString(SecureString value,
+            string resourceGroupName,
+            string dataFactoryName,
+            string gatewayName,
+            PSCredential credential,
+            string type,
+            string nonCredentialValue,
+            string authenticationType,
+            string serverName, string databaseName)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException("value");
-            }
-            
-            return Extensions.Encrypt((DataPipelineManagementClient) DataPipelineManagementClient, value,
-                resourceGroupName, dataFactoryName);
-        }
+            LinkedServiceType linkedServiceType = type == null ? LinkedServiceType.OnPremisesSqlLinkedService : GetLinkedServiceType(type);
 
-        public virtual string OnPremisesEncryptString(SecureString value, string resourceGroupName, string dataFactoryName, string gatewayName)
-        {
-            if (value == null)
+            if (linkedServiceType == LinkedServiceType.OnPremisesSqlLinkedService && linkedServiceType == LinkedServiceType.OnPremisesOracleLinkedService
+                && linkedServiceType == LinkedServiceType.OnPremisesFileSystemLinkedService && (value == null || value.Length == 0))
             {
                 throw new ArgumentNullException("value");
             }
+
+            AuthenticationType authType = authenticationType == null ? AuthenticationType.None : (AuthenticationType)Enum.Parse(typeof(AuthenticationType), authenticationType, true);
 
             var response = DataPipelineManagementClient.Gateways.RetrieveConnectionInfo(resourceGroupName, dataFactoryName, gatewayName);
             var gatewayEncryptionInfos = new[]
@@ -46,12 +49,27 @@ namespace Microsoft.Azure.Commands.DataFactories
                         {
                             ServiceToken = response.ConnectionInfo.ServiceToken,
                             IdentityCertThumbprint = response.ConnectionInfo.IdentityCertThumbprint,
-                            HostServiceUri = response.ConnectionInfo.HostServiceUri
+                            HostServiceUri = response.ConnectionInfo.HostServiceUri,
+                            InstanceVersionString = response.ConnectionInfo.Version
                         }
                 };
 
-            var gatewayEncryptionClient = new GatewayEncryptionClient();
-            return gatewayEncryptionClient.Encrypt(value, gatewayEncryptionInfos);
+            string userName = credential != null ? credential.UserName : null;
+            SecureString password = credential != null ? credential.Password : null;
+            UserInputConnectionString connectionString = new UserInputConnectionString(value, nonCredentialValue, userName, password, linkedServiceType, authType, serverName, databaseName);
+            return GatewayEncryptionClient.Encrypt(connectionString, gatewayEncryptionInfos);
+        }
+
+        internal static LinkedServiceType GetLinkedServiceType(string typeName)
+        {
+            LinkedServiceType result;
+            if (!Enum.TryParse<LinkedServiceType>(typeName, true, out result))
+            {
+                // Treat any non-existing type as a generic data source type for encryption
+                return LinkedServiceType.Unknown;
+            }
+
+            return result;
         }
     }
 }

@@ -12,43 +12,30 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 
 namespace Microsoft.Azure.Commands.DataFactories.Test
 {
     public class LinkedServiceTests : DataFactoriesScenarioTestsBase
     {
+        public LinkedServiceTests(Xunit.Abstractions.ITestOutputHelper output)
+        {
+            Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
+        }
+
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestLinkedService()
         {
             RunPowerShellTest("Test-LinkedService");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestLinkedServiceWithDataFactoryParameter()
         {
             RunPowerShellTest("Test-LinkedServiceWithDataFactoryParameter");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestGetLinkedServiceWithEmptyName()
-        {
-            RunPowerShellTest("Test-GetLinkedServiceWithEmptyName");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestGetLinkedServiceWithWhiteSpaceName()
-        {
-            RunPowerShellTest("Test-GetLinkedServiceWithWhiteSpaceName");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestLinkedServicePiping()
         {
             RunPowerShellTest("Test-LinkedServicePiping");
