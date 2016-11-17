@@ -12,14 +12,13 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System.Collections.Generic;
-
 using Microsoft.Azure.Commands.DataFactories;
 using Microsoft.Azure.Commands.DataFactories.Models;
 using Microsoft.Azure.Commands.DataFactories.Test;
 using Microsoft.Azure.Management.DataFactories.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Gateway
@@ -28,8 +27,9 @@ namespace Microsoft.WindowsAzure.Commands.Test.Gateway
     {
         private GetAzureDataFactoryGatewayCommand _cmdlet;
 
-        public GetDataFactoryGatewayTests()
+        public GetDataFactoryGatewayTests(Xunit.Abstractions.ITestOutputHelper output)
         {
+            Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
             base.SetupTest();
 
             _cmdlet = new GetAzureDataFactoryGatewayCommand
@@ -47,7 +47,6 @@ namespace Microsoft.WindowsAzure.Commands.Test.Gateway
             var expectedOutput = new PSDataFactoryGateway
             {
                 Name = GatewayName,
-                Location = Location,
                 Status = GatewayStatus.NeedRegistration
             };
 
@@ -74,14 +73,12 @@ namespace Microsoft.WindowsAzure.Commands.Test.Gateway
                     new PSDataFactoryGateway()
                         {
                             Name = GatewayName,
-                            Location = Location,
                             Status = GatewayStatus.NeedRegistration
                         },
 
                     new PSDataFactoryGateway()
                         {
                             Name = "foo2",
-                            Location = Location,
                             Status = GatewayStatus.NeedRegistration
                         }
                 };

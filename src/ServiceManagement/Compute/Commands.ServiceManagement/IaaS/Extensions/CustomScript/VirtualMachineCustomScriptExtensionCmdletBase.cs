@@ -12,14 +12,13 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.Azure.Commands.Common.Authentication;
 using Newtonsoft.Json;
 
 namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS.Extensions
 {
     public class VirtualMachineCustomScriptExtensionCmdletBase : VirtualMachineExtensionCmdletBase
     {
-        protected const string VirtualMachineCustomScriptExtensionNoun = "AzureVMCustomScriptExtension";
         protected const string ExtensionDefaultPublisher = "Microsoft.Compute";
         protected const string ExtensionDefaultName = "CustomScriptExtension";
         protected const string ExtensionDefaultVersion = "1.*";

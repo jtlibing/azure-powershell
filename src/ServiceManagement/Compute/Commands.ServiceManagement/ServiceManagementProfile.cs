@@ -31,6 +31,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement
     using NSM = Management.Compute.Models;
     using NVM = Management.Network.Models;
     using PVM = Model;
+    using Microsoft.Azure;
 
     public static class ServiceManagementMapperExtension
     {
@@ -184,14 +185,31 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement
             Mapper.CreateMap<NSM.VirtualMachineVMImageListResponse.DataDiskConfiguration, PVM.DataDiskConfiguration>()
                   .ForMember(c => c.Lun, o => o.MapFrom(r => r.LogicalUnitNumber));
 
+            Mapper.CreateMap<IList<NSM.DataDiskConfigurationCreateParameters>, List<PVM.DataDiskConfiguration>>();
+            Mapper.CreateMap<List<NSM.DataDiskConfigurationCreateParameters>, List<PVM.DataDiskConfiguration>>();
+            Mapper.CreateMap<IList<NSM.DataDiskConfigurationCreateParameters>, PVM.DataDiskConfigurationList>();
             Mapper.CreateMap<IList<NSM.DataDiskConfigurationUpdateParameters>, List<PVM.DataDiskConfiguration>>();
             Mapper.CreateMap<List<NSM.DataDiskConfigurationUpdateParameters>, List<PVM.DataDiskConfiguration>>();
             Mapper.CreateMap<IList<NSM.DataDiskConfigurationUpdateParameters>, PVM.DataDiskConfigurationList>();
 
+            Mapper.CreateMap<PVM.OSDiskConfiguration, NSM.OSDiskConfigurationCreateParameters>()
+                  .ForMember(c => c.HostCaching, o => o.MapFrom(r => r.HostCaching))
+                  .ForMember(c => c.MediaLink, o => o.MapFrom(r => r.MediaLink))
+                  .ForMember(c => c.OS, o => o.MapFrom(r => r.OS))
+                  .ForMember(c => c.OSState, o => o.MapFrom(r => r.OSState));
+            Mapper.CreateMap<PVM.DataDiskConfiguration, NSM.DataDiskConfigurationCreateParameters>()
+                  .ForMember(c => c.LogicalUnitNumber, o => o.MapFrom(r => r.Lun));
             Mapper.CreateMap<PVM.OSDiskConfiguration, NSM.OSDiskConfigurationUpdateParameters>();
             Mapper.CreateMap<PVM.DataDiskConfiguration, NSM.DataDiskConfigurationUpdateParameters>()
                   .ForMember(c => c.LogicalUnitNumber, o => o.MapFrom(r => r.Lun));
 
+            Mapper.CreateMap<IList<PVM.DataDiskConfiguration>, IList<NSM.DataDiskConfigurationCreateParameters>>();
+            Mapper.CreateMap<List<PVM.DataDiskConfiguration>, List<NSM.DataDiskConfigurationCreateParameters>>();
+            Mapper.CreateMap<PVM.DataDiskConfigurationList, Collection<PVM.DataDiskConfiguration>>();
+            Mapper.CreateMap<Collection<PVM.DataDiskConfiguration>, IList<NSM.DataDiskConfigurationCreateParameters>>();
+            Mapper.CreateMap<Collection<PVM.DataDiskConfiguration>, List<NSM.DataDiskConfigurationCreateParameters>>();
+            Mapper.CreateMap<PVM.DataDiskConfigurationList, IList<NSM.DataDiskConfigurationCreateParameters>>();
+            Mapper.CreateMap<PVM.DataDiskConfigurationList, List<NSM.DataDiskConfigurationCreateParameters>>();
             Mapper.CreateMap<IList<PVM.DataDiskConfiguration>, IList<NSM.DataDiskConfigurationUpdateParameters>>();
             Mapper.CreateMap<List<PVM.DataDiskConfiguration>, List<NSM.DataDiskConfigurationUpdateParameters>>();
             Mapper.CreateMap<PVM.DataDiskConfigurationList, Collection<PVM.DataDiskConfiguration>>();
@@ -251,6 +269,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement
                   .ForMember(c => c.InputEndpoints, o => o.MapFrom(r => r.InputEndpoints != null ? r.InputEndpoints.ToList() : null))
                   .ForMember(c => c.SubnetNames, o => o.MapFrom(r => r.SubnetNames != null ? r.SubnetNames.ToList() : null))
                   .ForMember(c => c.PublicIPs, o => o.MapFrom(r => r.PublicIPs != null ? r.PublicIPs.ToList() : null));
+            Mapper.CreateMap<PVM.DebugSettings, NSM.DebugSettings>();
 
             Mapper.CreateMap<PVM.LinuxProvisioningConfigurationSet.SSHKeyPair, NSM.SshSettingKeyPair>();
             Mapper.CreateMap<PVM.LinuxProvisioningConfigurationSet.SSHPublicKey, NSM.SshSettingPublicKey>();
@@ -295,6 +314,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement
                   .ForMember(c => c.OS, o => o.MapFrom(r => r.OperatingSystem));
             Mapper.CreateMap<NSM.ConfigurationSet, PVM.ConfigurationSet>();
             Mapper.CreateMap<NSM.ConfigurationSet, PVM.NetworkConfigurationSet>();
+            Mapper.CreateMap<NSM.DebugSettings, PVM.DebugSettings>();
 
             Mapper.CreateMap<NSM.SshSettingKeyPair, PVM.LinuxProvisioningConfigurationSet.SSHKeyPair>();
             Mapper.CreateMap<NSM.SshSettingPublicKey, PVM.LinuxProvisioningConfigurationSet.SSHPublicKey>();
@@ -327,7 +347,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement
                   .ForMember(c => c.Vip, o => o.MapFrom(r => r.VirtualIPAddress));
 
             //Common mapping
-            Mapper.CreateMap<OperationResponse, ManagementOperationContext>()
+            Mapper.CreateMap<AzureOperationResponse, ManagementOperationContext>()
                   .ForMember(c => c.OperationId, o => o.MapFrom(r => r.RequestId))
                   .ForMember(c => c.OperationStatus, o => o.MapFrom(r => r.StatusCode.ToString()));
 
@@ -443,19 +463,17 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement
             Mapper.CreateMap<StorageAccountGetResponse, PVM.StorageServicePropertiesOperationContext>()
                   .ForMember(c => c.StorageAccountDescription, o => o.MapFrom(r => r.StorageAccount.Properties == null ? null : r.StorageAccount.Properties.Description))
                   .ForMember(c => c.StorageAccountName, o => o.MapFrom(r => r.StorageAccount.Name))
-                  .ForMember(c => c.GeoReplicationEnabled, o => o.MapFrom(r => string.Equals(r.StorageAccount.Properties.AccountType, StorageAccountTypes.StandardGRS) ? (bool?)true : null));
+                  .ForMember(c => c.MigrationState, o => o.MapFrom(r => r.StorageAccount.MigrationState));
             Mapper.CreateMap<StorageAccountProperties, PVM.StorageServicePropertiesOperationContext>()
                   .ForMember(c => c.StorageAccountDescription, o => o.MapFrom(r => r.Description))
                   .ForMember(c => c.GeoPrimaryLocation, o => o.MapFrom(r => r.GeoPrimaryRegion))
                   .ForMember(c => c.GeoSecondaryLocation, o => o.MapFrom(r => r.GeoSecondaryRegion))
                   .ForMember(c => c.StorageAccountStatus, o => o.MapFrom(r => r.Status))
                   .ForMember(c => c.StatusOfPrimary, o => o.MapFrom(r => r.StatusOfGeoPrimaryRegion))
-                  .ForMember(c => c.StatusOfSecondary, o => o.MapFrom(r => r.StatusOfGeoSecondaryRegion))
-                  .ForMember(c => c.GeoReplicationEnabled, o => o.MapFrom(r => string.Equals(r.AccountType, StorageAccountTypes.StandardGRS) ? (bool?)true : null));
+                  .ForMember(c => c.StatusOfSecondary, o => o.MapFrom(r => r.StatusOfGeoSecondaryRegion));
             Mapper.CreateMap<StorageAccount, PVM.StorageServicePropertiesOperationContext>()
                   .ForMember(c => c.StorageAccountDescription, o => o.MapFrom(r => r.Properties == null ? null : r.Properties.Description))
-                  .ForMember(c => c.StorageAccountName, o => o.MapFrom(r => r.Name))
-                  .ForMember(c => c.GeoReplicationEnabled, o => o.MapFrom(r => string.Equals(r.Properties.AccountType, StorageAccountTypes.StandardGRS) ? (bool?)true : null));
+                  .ForMember(c => c.StorageAccountName, o => o.MapFrom(r => r.Name));
             Mapper.CreateMap<OperationStatusResponse, PVM.StorageServicePropertiesOperationContext>()
                   .ForMember(c => c.OperationId, o => o.MapFrom(r => r.Id))
                   .ForMember(c => c.OperationStatus, o => o.MapFrom(r => r.Status.ToString()));

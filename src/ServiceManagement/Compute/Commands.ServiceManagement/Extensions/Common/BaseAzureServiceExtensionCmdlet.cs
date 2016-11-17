@@ -9,6 +9,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure;
+using Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers;
+using Microsoft.WindowsAzure.Commands.ServiceManagement.Properties;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.WindowsAzure.Management.Compute;
+using Microsoft.WindowsAzure.Management.Compute.Models;
 using System;
 using System.IO;
 using System.Linq;
@@ -19,11 +25,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers;
-using Microsoft.WindowsAzure.Commands.ServiceManagement.Properties;
-using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
-using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.WindowsAzure.Management.Compute.Models;
+using Hyak.Common;
 
 namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
 {
@@ -36,8 +38,10 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
 
         protected const string NewExtensionParameterSetName = "NewExtension";
         protected const string NewExtensionUsingThumbprintParameterSetName = "NewExtensionUsingThumbprint";
+        protected const string UpdateExtensionStatusParameterSetName = "UpdateExtensionStatusParameterSetName";
         protected const string SetExtensionParameterSetName = "SetExtension";
         protected const string SetExtensionUsingThumbprintParameterSetName = "SetExtensionUsingThumbprint";
+        protected const string SetExtensionUsingDiagnosticsConfigurationParameterSetName = "SetExtensionUsingDiagnosticsConfiguration";
         protected const string RemoveByRolesParameterSet = "RemoveByRoles";
         protected const string RemoveAllRolesParameterSet = "RemoveAllRoles";
 
@@ -47,6 +51,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
         protected XDocument PublicConfigurationXml { get; set; }
         protected XDocument PrivateConfigurationXml { get; set; }
         protected DeploymentGetResponse Deployment { get; set; }
+        protected DeploymentGetResponse PeerDeployment { get; set; }
 
         public virtual string ServiceName { get; set; }
         public virtual string Slot { get; set; }
@@ -60,6 +65,8 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
         public virtual string ProviderNamespace { get; set; }
         public virtual string ExtensionName { get; set; }
         public virtual string Version { get; set; }
+        public virtual string ExtensionId { get; set; }
+        public virtual string ExtensionState { get; set; }
 
         public BaseAzureServiceExtensionCmdlet()
             : base()
@@ -74,8 +81,8 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
         protected void ValidateService()
         {
             string serviceName;
-            ServiceSettings settings = CommonUtilities.GetDefaultSettings(CommonUtilities.TryGetServiceRootPath(CurrentPath()),
-                ServiceName, null, null, null, null, CurrentContext.Subscription.Id.ToString(), out serviceName);
+            CommonUtilities.GetDefaultSettings(CommonUtilities.TryGetServiceRootPath(CurrentPath()),
+                ServiceName, null, null, null, null, Profile.Context.Subscription.Id.ToString(), out serviceName);
 
             if (string.IsNullOrEmpty(serviceName))
             {
@@ -106,12 +113,13 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
                 }
                 Deployment.ExtensionConfiguration = Deployment.ExtensionConfiguration ?? new Microsoft.WindowsAzure.Management.Compute.Models.ExtensionConfiguration();
             }
+
+            PeerDeployment = GetPeerDeployment(Slot);
         }
 
-        protected void ValidateRoles()
+        protected void ValidateRoles(string[] roles)
         {
-            Role = Role == null ? new string[0] : Role.Select(r => r == null ? string.Empty : r.Trim()).Distinct().ToArray();
-            foreach (string roleName in Role)
+            foreach (string roleName in roles)
             {
                 if (Deployment.Roles == null || !Deployment.Roles.Any(r => r.RoleName == roleName))
                 {
@@ -123,6 +131,12 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
                     throw new Exception(Resources.ServiceExtensionCannotFindRoleName);
                 }
             }
+        }
+
+        protected void ValidateRoles()
+        {
+            Role = Role == null ? new string[0] : Role.Select(r => r == null ? string.Empty : r.Trim()).Distinct().ToArray();
+            ValidateRoles(Role);
         }
 
         protected void ValidateThumbprint(bool uploadCert)
@@ -274,12 +288,21 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
                 {
                     if (ex.Response.StatusCode != HttpStatusCode.NotFound && IsVerbose() == false)
                     {
-                        this.WriteExceptionDetails(ex);
+                        WriteExceptionError(ex);
                     }
                 }
             });
 
             return d;
+        }
+
+        protected DeploymentGetResponse GetPeerDeployment(string currentSlot)
+        {
+            var currentSlotType = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), currentSlot, true);
+            var peerSlot = currentSlotType == DeploymentSlot.Production ? DeploymentSlot.Staging : DeploymentSlot.Production;
+            var peerSlotStr = peerSlot.ToString();
+
+            return GetDeployment(peerSlotStr);
         }
 
         protected SecureString GetSecurePassword(string password)

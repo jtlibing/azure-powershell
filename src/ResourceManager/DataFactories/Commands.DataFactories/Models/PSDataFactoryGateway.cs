@@ -12,8 +12,8 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
 using Microsoft.Azure.Management.DataFactories.Models;
+using System;
 
 namespace Microsoft.Azure.Commands.DataFactories.Models
 {
@@ -40,12 +40,6 @@ namespace Microsoft.Azure.Commands.DataFactories.Models
         {
             get { return _gateway.Name; }
             set { _gateway.Name = value; }
-        }
-
-        public string Location
-        {
-            get { return _gateway.Location; }
-            set { _gateway.Location = value; }
         }
 
         public string Description
@@ -101,7 +95,7 @@ namespace Microsoft.Azure.Commands.DataFactories.Models
             get { return _gateway.Properties == null ? string.Empty : _gateway.Properties.ProvisioningState; }
         }
 
-        internal string Key
+        public string Key
         {
             get { return _gateway.Properties.Key; }
             set { _gateway.Properties.Key = value; }

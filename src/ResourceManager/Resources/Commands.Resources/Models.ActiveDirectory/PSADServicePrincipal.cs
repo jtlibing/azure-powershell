@@ -12,10 +12,14 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
+
 namespace Microsoft.Azure.Commands.Resources.Models.ActiveDirectory
 {
     public class PSADServicePrincipal : PSADObject
     {
-        public string ServicePrincipalName { get; set; }
+        public string[] ServicePrincipalNames { get; set; }
+
+        public Guid ApplicationId { get; set; }        
     }
 }

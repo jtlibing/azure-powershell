@@ -187,8 +187,23 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
         [Parameter(Position = 9, ValueFromPipelineByPropertyName = true, ParameterSetName = DomainThumbprintParameterSet)]
         [Parameter(Position = 9, ValueFromPipelineByPropertyName = true, ParameterSetName = DomainJoinOptionParameterSet)]
         [Parameter(Position = 9, ValueFromPipelineByPropertyName = true, ParameterSetName = DomainJoinOptionThumbprintParameterSet)]
+        [Parameter(Position = 6, ValueFromPipelineByPropertyName = true, ParameterSetName = WorkgroupParameterSet)]
+        [Parameter(Position = 6, ValueFromPipelineByPropertyName = true, ParameterSetName = WorkgroupThumbprintParameterSet)]
         [ValidateNotNullOrEmpty]
         public override string Version
+        {
+            get;
+            set;
+        }
+
+        [Parameter(Position = 10, Mandatory = false, ValueFromPipelineByPropertyName = true, ParameterSetName = DomainParameterSet)]
+        [Parameter(Position = 10, Mandatory = false, ValueFromPipelineByPropertyName = true, ParameterSetName = DomainThumbprintParameterSet)]
+        [Parameter(Position = 10, Mandatory = false, ValueFromPipelineByPropertyName = true, ParameterSetName = DomainJoinOptionParameterSet)]
+        [Parameter(Position = 10, Mandatory = false, ValueFromPipelineByPropertyName = true, ParameterSetName = DomainJoinOptionThumbprintParameterSet)]
+        [Parameter(Position = 7, Mandatory = false, ValueFromPipelineByPropertyName = true, ParameterSetName = WorkgroupParameterSet)]
+        [Parameter(Position = 7, Mandatory = false, ValueFromPipelineByPropertyName = true, ParameterSetName = WorkgroupThumbprintParameterSet)]
+        [ValidateNotNullOrEmpty]
+        public override string ExtensionId
         {
             get;
             set;
@@ -206,6 +221,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions
             ValidateParameters();
             WriteObject(new ExtensionConfigurationInput
             {
+                Id = ExtensionId,
                 CertificateThumbprint = CertificateThumbprint,
                 ThumbprintAlgorithm = ThumbprintAlgorithm,
                 ProviderNameSpace = ProviderNamespace,

@@ -12,25 +12,20 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System.IO;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Management.DataFactories;
-using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.WindowsAzure.Commands.Common.Models;
-using Microsoft.Azure.Commands.DataFactories.Properties;
-using System;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage;
-using System.Net;
+using System.IO;
 
 namespace Microsoft.Azure.Commands.DataFactories
 {
     public partial class DataFactoryClient
     {
-        public IDataPipelineManagementClient DataPipelineManagementClient { get; private set; }
+        public IDataFactoryManagementClient DataPipelineManagementClient { get; private set; }
 
         public DataFactoryClient(AzureContext context)
         {
-            DataPipelineManagementClient = AzureSession.ClientFactory.CreateClient<DataPipelineManagementClient>(
+            DataPipelineManagementClient = AzureSession.ClientFactory.CreateClient<DataFactoryManagementClient>(
                 context, AzureEnvironment.Endpoint.ResourceManager);
         }
 

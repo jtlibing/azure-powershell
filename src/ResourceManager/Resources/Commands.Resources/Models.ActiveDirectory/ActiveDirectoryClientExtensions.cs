@@ -14,7 +14,6 @@
 
 using Microsoft.Azure.Graph.RBAC.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.Azure.Commands.Resources.Models.ActiveDirectory
@@ -30,7 +29,7 @@ namespace Microsoft.Azure.Commands.Resources.Models.ActiveDirectory
             };
         }
 
-        public static PSADObject ToPSADObject(this Group group)
+        public static PSADObject ToPSADObject(this ADGroup group)
         {
             return new PSADObject()
             {
@@ -50,20 +49,29 @@ namespace Microsoft.Azure.Commands.Resources.Models.ActiveDirectory
                     DisplayName = obj.DisplayName,
                     Id = new Guid(obj.ObjectId),
                     Type = obj.ObjectType,
-                    UserPrincipalName = obj.UserPrincipalName,
-                    Mail = obj.Mail
+                    UserPrincipalName = obj.UserPrincipalName
                 };
             }
-            else if (obj.ObjectType == typeof(Group).Name)
+            else if (obj.ObjectType == "Group")
             {
                 return new PSADGroup()
                 {
                     DisplayName = obj.DisplayName,
                     Type = obj.ObjectType,
-                    Id = new Guid(obj.ObjectId)/*,
-                    Mail = group.Mail*/
+                    Id = new Guid(obj.ObjectId),
+                    SecurityEnabled = obj.SecurityEnabled
                 };
 
+            }
+            else if (obj.ObjectType == typeof(ServicePrincipal).Name)
+            {
+                return new PSADServicePrincipal()
+                {
+                    DisplayName = obj.DisplayName,
+                    Id = new Guid(obj.ObjectId),
+                    Type = obj.ObjectType,
+                    ServicePrincipalNames = obj.ServicePrincipalNames.ToArray()
+                };
             }
             else
             {
@@ -92,17 +100,18 @@ namespace Microsoft.Azure.Commands.Resources.Models.ActiveDirectory
                 DisplayName = user.DisplayName,
                 Id = new Guid(user.ObjectId),
                 UserPrincipalName = user.UserPrincipalName,
-                Mail = user.SignInName
+                Type = user.ObjectType
             };
         }
 
-        public static PSADGroup ToPSADGroup(this Group group)
+        public static PSADGroup ToPSADGroup(this ADGroup group)
         {
             return new PSADGroup()
             {
                 DisplayName = group.DisplayName,
-                Id = new Guid(group.ObjectId)/*,
-                Mail = group.Mail*/
+                Id = new Guid(group.ObjectId),
+                SecurityEnabled = group.SecurityEnabled,
+                Type = group.ObjectType
             };
         }
 
@@ -112,7 +121,78 @@ namespace Microsoft.Azure.Commands.Resources.Models.ActiveDirectory
             {
                 DisplayName = servicePrincipal.DisplayName,
                 Id = new Guid(servicePrincipal.ObjectId),
-                ServicePrincipalName = servicePrincipal.ServicePrincipalNames.FirstOrDefault()
+                ApplicationId = Guid.Parse(servicePrincipal.AppId),
+                ServicePrincipalNames = servicePrincipal.ServicePrincipalNames.ToArray(),
+                Type = servicePrincipal.ObjectType
+            };
+        }
+
+        public static PSADApplication ToPSADApplication(this Application application)
+        {
+            if (application != null)
+            {
+                return new PSADApplication()
+                {
+                    ObjectId = Guid.Parse(application.ObjectId),
+                    DisplayName = application.DisplayName,
+                    Type = application.ObjectType,
+                    ApplicationId = Guid.Parse(application.AppId),
+                    IdentifierUris = application.IdentifierUris,
+                    HomePage = application.Homepage,
+                    ReplyUrls = application.ReplyUrls,
+                    AppPermissions = application.AppPermissions,
+                    AvailableToOtherTenants = application.AvailableToOtherTenants ?? false
+                };
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public static KeyCredential ToGraphKeyCredential(this PSADKeyCredential PSKeyCredential)
+        {
+            return new KeyCredential
+            {
+                StartDate = PSKeyCredential.StartDate,
+                EndDate = PSKeyCredential.EndDate,
+                KeyId = PSKeyCredential.KeyId.ToString(),
+                Value = PSKeyCredential.CertValue,
+                Type= "AsymmetricX509Cert",
+                Usage= "Verify"
+            };
+        }
+
+        public static PasswordCredential ToGraphPasswordCredential(this PSADPasswordCredential PSPasswordCredential)
+        {
+            return new PasswordCredential
+            {
+                StartDate = PSPasswordCredential.StartDate,
+                EndDate = PSPasswordCredential.EndDate,
+                KeyId = PSPasswordCredential.KeyId.ToString(),
+                Value = PSPasswordCredential.Password
+            };
+        }
+
+        public static PSADCredential ToPSADCredential(this KeyCredential credential)
+        {
+            return new PSADCredential
+            {
+                KeyId = credential.KeyId,
+                StartDate = credential.StartDate == null ? string.Empty : credential.StartDate.ToString(),
+                EndDate = credential.EndDate == null ? string.Empty : credential.EndDate.ToString(),
+                Type = credential.Type
+            };
+        }
+
+        public static PSADCredential ToPSADCredential(this PasswordCredential credential)
+        {
+            return new PSADCredential
+            {
+                KeyId = credential.KeyId,
+                StartDate = credential.StartDate == null ? string.Empty : credential.StartDate.ToString(),
+                EndDate = credential.EndDate == null ? string.Empty : credential.EndDate.ToString(),
+                Type = "Password"
             };
         }
     }

@@ -12,11 +12,14 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
+using System.IO;
 using System.Management.Automation;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Permissions;
 using Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.WindowsAzure.Management.Compute;
 using Microsoft.WindowsAzure.Management.Compute.Models;
 
 namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Certificates
@@ -89,7 +92,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Certificates
             else
             {
                 var certPath = this.ResolvePath(CertToDeploy.ToString());
-                return CertUtilsNewSM.GetCertificateData(certPath, Password);
+                return File.ReadAllBytes(certPath);
             }
         }
     }
