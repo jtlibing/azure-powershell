@@ -12,32 +12,48 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Storage;
 using Microsoft.WindowsAzure.Management.Storage;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.Azure.Common.Authentication;
+using System;
+using System.Collections.Generic;
 
 namespace Microsoft.WindowsAzure.Commands.Utilities.Common
 {
     public static class WindowsAzureSubscriptionExtensions
     {
-        private static Dictionary<Guid, CloudStorageAccount> storageAccountCache = new Dictionary<Guid,CloudStorageAccount>();
+        private static Dictionary<Guid, CloudStorageAccount> storageAccountCache = new Dictionary<Guid, CloudStorageAccount>();
 
-        public static CloudStorageAccount GetCloudStorageAccount(this AzureSubscription subscription, AzureProfile profile)
+        /// <summary>
+        /// Get storage account details from the current storage account
+        /// </summary>
+        /// <param name="subscription">The subscription containing the account.</param>
+        /// <param name="profile">The profile continuing the subscription.</param>
+        /// <returns>Storage account details, usable with the windows azure storage data plane library.</returns>
+        public static CloudStorageAccount GetCloudStorageAccount(this AzureSubscription subscription, AzureSMProfile profile)
         {
             if (subscription == null)
             {
                 return null;
             }
 
-            using (var storageClient = AzureSession.ClientFactory.CreateClient<StorageManagementClient>(profile, subscription, AzureEnvironment.Endpoint.ServiceManagement))
+            var account = subscription.GetProperty(AzureSubscription.Property.StorageAccount);
+            try
             {
-                return StorageUtilities.GenerateCloudStorageAccount(
-                    storageClient, subscription.GetProperty(AzureSubscription.Property.StorageAccount));
+                return CloudStorageAccount.Parse(account);
+
+            }
+            catch
+            {
+                using (
+                    var storageClient = AzureSession.ClientFactory.CreateClient<StorageManagementClient>(profile,
+                        subscription, AzureEnvironment.Endpoint.ServiceManagement))
+                {
+                    return StorageUtilities.GenerateCloudStorageAccount(
+                        storageClient, account);
+                }
             }
         }
     }

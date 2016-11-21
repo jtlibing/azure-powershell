@@ -12,17 +12,18 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Management.Automation;
 using Microsoft.Azure.Commands.KeyVault.Models;
-using Microsoft.Azure.Commands.KeyVault.Properties;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Management.Automation;
+using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 
-namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
+namespace Microsoft.Azure.Commands.KeyVault
 {
-    [Cmdlet(VerbsCommon.Get, "AzureKeyVaultKey",
-        DefaultParameterSetName = ByVaultNameParameterSet)]
+    [Cmdlet(VerbsCommon.Get, "AzureKeyVaultKey",        
+        DefaultParameterSetName = ByVaultNameParameterSet,
+        HelpUri = Constants.KeyVaultHelpUri)]
     [OutputType(typeof(List<KeyIdentityItem>), typeof(KeyBundle))]
     public class GetAzureKeyVaultKey : KeyVaultCmdletBase
     {
@@ -31,6 +32,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
 
         private const string ByKeyNameParameterSet = "ByKeyName";
         private const string ByVaultNameParameterSet = "ByVaultName";
+        private const string ByKeyVersionsParameterSet = "ByKeyVersions";
 
         #endregion
 
@@ -49,6 +51,11 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = ByVaultNameParameterSet,
             HelpMessage = "Vault name. Cmdlet constructs the FQDN of a vault based on the name and currently selected environment.")]
+        [Parameter(Mandatory = true,
+            Position = 0,
+            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = ByKeyVersionsParameterSet,
+            HelpMessage = "Vault name. Cmdlet constructs the FQDN of a vault based on the name and currently selected environment.")]
 
         [ValidateNotNullOrEmpty]
         public string VaultName { get; set; }
@@ -60,9 +67,14 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
             ParameterSetName = ByKeyNameParameterSet,
             Position = 1,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "key name. Cmdlet constructs the FQDN of a key from vault name, currently selected environment and key name.")]
+            HelpMessage = "Key name. Cmdlet constructs the FQDN of a key from vault name, currently selected environment and key name.")]
+        [Parameter(Mandatory = true,
+            ParameterSetName = ByKeyVersionsParameterSet,
+            Position = 1,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "Key name. Cmdlet constructs the FQDN of a key from vault name, currently selected environment and key name.")]
         [ValidateNotNullOrEmpty]
-        [Alias("KeyName")]
+        [Alias(Constants.KeyName)]
         public string Name { get; set; }
 
         /// <summary>
@@ -72,30 +84,72 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
             ParameterSetName = ByKeyNameParameterSet,
             Position = 2,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "key version. Cmdlet constructs the FQDN of a key from vault name, currently selected environment, key name and key version.")]
-        [ValidateNotNullOrEmpty]
+            HelpMessage = "Key version. Cmdlet constructs the FQDN of a key from vault name, currently selected environment, key name and key version.")]
         [Alias("KeyVersion")]
         public string Version { get; set; }
+
+        [Parameter(Mandatory = true,
+            ParameterSetName = ByKeyVersionsParameterSet,
+            HelpMessage = "Specifies whether to include the versions of the key in the output.")]
+        public SwitchParameter IncludeVersions { get; set; }
 
         #endregion
 
         public override void ExecuteCmdlet()
         {
+            KeyBundle keyBundle;
             switch (ParameterSetName)
             {
-                case ByKeyNameParameterSet:
-                    var keyBundle = DataServiceClient.GetKey(VaultName, Name, Version);
+                case ByKeyNameParameterSet:                    
+                    keyBundle = DataServiceClient.GetKey(VaultName, Name, Version ?? string.Empty);
                     WriteObject(keyBundle);
                     break;
-
+                case ByKeyVersionsParameterSet:
+                    keyBundle = DataServiceClient.GetKey(VaultName, Name, string.Empty);
+                    if (keyBundle != null)
+                    {
+                        WriteObject(new KeyIdentityItem(keyBundle));
+                        GetAndWriteKeyVersions(VaultName, Name, keyBundle.Version);
+                    }
+                    break;
                 case ByVaultNameParameterSet:
-                    IEnumerable<KeyIdentityItem> keyBundles = DataServiceClient.GetKeys(VaultName);
-                    WriteObject(keyBundles, true);
+                    GetAndWriteKeys(VaultName);
                     break;
 
                 default:
-                    throw new ArgumentException(Resources.BadParameterSetName);
+                    throw new ArgumentException(KeyVaultProperties.Resources.BadParameterSetName);
             }
+        }
+
+        private void GetAndWriteKeys(string vaultName)
+        {
+            KeyVaultObjectFilterOptions options = new KeyVaultObjectFilterOptions
+            {
+                VaultName = vaultName,
+                NextLink = null
+            };
+
+            do
+            {
+                var pageResults = DataServiceClient.GetKeys(options);
+                WriteObject(pageResults, true);
+            } while (!string.IsNullOrEmpty(options.NextLink));
+        }
+
+        private void GetAndWriteKeyVersions(string vaultName, string name, string currentKeyVersion)
+        {
+            KeyVaultObjectFilterOptions options = new KeyVaultObjectFilterOptions
+            {
+                VaultName = vaultName,
+                NextLink = null,
+                Name = name
+            };
+
+            do
+            {
+                var pageResults = DataServiceClient.GetKeyVersions(options).Where(k => k.Version != currentKeyVersion);
+                WriteObject(pageResults, true);
+            } while (!string.IsNullOrEmpty(options.NextLink));
         }
     }
 }

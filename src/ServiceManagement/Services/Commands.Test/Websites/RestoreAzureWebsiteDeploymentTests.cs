@@ -15,9 +15,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Websites;
 using Microsoft.WindowsAzure.Commands.Utilities.Websites;
@@ -25,7 +26,7 @@ using Microsoft.WindowsAzure.Commands.Utilities.Websites.Services.DeploymentEnti
 using Microsoft.WindowsAzure.Commands.Utilities.Websites.Services.WebEntities;
 using Microsoft.WindowsAzure.Commands.Websites;
 using Moq;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Websites
 {
@@ -33,6 +34,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
     public class RestoreAzureWebsiteDeploymentTests : WebsitesTestBase
     {
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void RestoreAzureWebsiteDeploymentTest()
         {
             // Setup
@@ -85,14 +87,15 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
                 WebsitesClient = clientMock.Object,
                 CommandRuntime = new MockCommandRuntime(),
             };
-            currentProfile = new AzureProfile();
+            currentProfile = new AzureSMProfile();
             var subscription = new AzureSubscription{Id = new Guid(base.subscriptionId) };
             subscription.Properties[AzureSubscription.Property.Default] = "True";
             currentProfile.Subscriptions[new Guid(base.subscriptionId)] = subscription;
 
             restoreAzureWebsiteDeploymentCommand.ExecuteCmdlet();
-            Assert.Equal(1, ((MockCommandRuntime) restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.Count);
-            var responseDeployments = (IEnumerable<DeployResult>)((MockCommandRuntime) restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.FirstOrDefault();
+
+            var responseDeployments = System.Management.Automation.LanguagePrimitives.GetEnumerable(((MockCommandRuntime) restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline).Cast<DeployResult>();
+
             Assert.NotNull(responseDeployments);
             Assert.Equal(2, responseDeployments.Count());
             Assert.True(responseDeployments.Any(d => d.Id.Equals("id2") && d.Complete));
@@ -107,14 +110,14 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
                 WebsitesClient = clientMock.Object,
                 CommandRuntime = new MockCommandRuntime(),
             };
-            currentProfile = new AzureProfile();
+            currentProfile = new AzureSMProfile();
             subscription = new AzureSubscription{Id = new Guid(base.subscriptionId) };
             subscription.Properties[AzureSubscription.Property.Default] = "True";
             currentProfile.Subscriptions[new Guid(base.subscriptionId)] = subscription;
 
             restoreAzureWebsiteDeploymentCommand.ExecuteCmdlet();
-            Assert.Equal(1, ((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.Count);
-            responseDeployments = (IEnumerable<DeployResult>)((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.FirstOrDefault();
+
+            responseDeployments = System.Management.Automation.LanguagePrimitives.GetEnumerable(((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline).Cast<DeployResult>();
             Assert.NotNull(responseDeployments);
             Assert.Equal(2, responseDeployments.Count());
             Assert.True(responseDeployments.Any(d => d.Id.Equals("id1") && d.Complete));
@@ -122,6 +125,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void RestoresDeploymentForSlot()
         {
             string slot = "staging";
@@ -176,15 +180,16 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
                     CommandRuntime = new MockCommandRuntime(),
                     Slot = slot
                 };
-            currentProfile = new AzureProfile();
+            currentProfile = new AzureSMProfile();
             var subscription = new AzureSubscription{Id = new Guid(base.subscriptionId) };
             subscription.Properties[AzureSubscription.Property.Default] = "True";
             currentProfile.Subscriptions[new Guid(base.subscriptionId)] = subscription;
 
 
             restoreAzureWebsiteDeploymentCommand.ExecuteCmdlet();
-            Assert.Equal(1, ((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.Count);
-            var responseDeployments = (IEnumerable<DeployResult>)((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.FirstOrDefault();
+
+            var responseDeployments = System.Management.Automation.LanguagePrimitives.GetEnumerable(((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline).Cast<DeployResult>();
+
             Assert.NotNull(responseDeployments);
             Assert.Equal(2, responseDeployments.Count());
             Assert.True(responseDeployments.Any(d => d.Id.Equals("id2") && d.Complete));
@@ -200,14 +205,15 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
                 CommandRuntime = new MockCommandRuntime(),
                 Slot = slot
             };
-            currentProfile = new AzureProfile();
+            currentProfile = new AzureSMProfile();
             subscription = new AzureSubscription{Id = new Guid(base.subscriptionId) };
             subscription.Properties[AzureSubscription.Property.Default] = "True";
             currentProfile.Subscriptions[new Guid(base.subscriptionId)] = subscription;
 
             restoreAzureWebsiteDeploymentCommand.ExecuteCmdlet();
-            Assert.Equal(1, ((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.Count);
-            responseDeployments = (IEnumerable<DeployResult>)((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline.FirstOrDefault();
+
+            responseDeployments = System.Management.Automation.LanguagePrimitives.GetEnumerable(((MockCommandRuntime)restoreAzureWebsiteDeploymentCommand.CommandRuntime).OutputPipeline).Cast<DeployResult>();
+
             Assert.NotNull(responseDeployments);
             Assert.Equal(2, responseDeployments.Count());
             Assert.True(responseDeployments.Any(d => d.Id.Equals("id1") && d.Complete));

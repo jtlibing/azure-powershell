@@ -17,9 +17,10 @@ using Microsoft.WindowsAzure.Commands.Common;
 using Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.GetAzureHDInsightClusters.BaseInterfaces;
 using Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.GetAzureHDInsightClusters.Extensions;
 using Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.ServiceLocation;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
 using System.IO;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.ServiceManagemenet.Common;
 
 namespace Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.GetAzureHDInsightClusters
 {
@@ -39,11 +40,11 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.GetAzureHDInsightCl
             this.tokenSource.Cancel();
         }
 
-        internal IHDInsightClient GetClient()
+        internal IHDInsightClient GetClient(bool ignoreSslErrors = false)
         {
             this.CurrentSubscription.ArgumentNotNull("CurrentSubscription");
 
-            ProfileClient client = new ProfileClient(new AzureProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
+            ProfileClient client = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
 
             var subscriptionCredentials = this.GetSubscriptionCredentials(
                 this.CurrentSubscription,
@@ -55,7 +56,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.GetAzureHDInsightCl
                 subscriptionCredentials.Endpoint = this.Endpoint;               
             }
 
-            var clientInstance = ServiceLocator.Instance.Locate<IAzureHDInsightClusterManagementClientFactory>().Create(subscriptionCredentials);
+            var clientInstance = ServiceLocator.Instance.Locate<IAzureHDInsightClusterManagementClientFactory>().Create(subscriptionCredentials, ignoreSslErrors);
             clientInstance.SetCancellationSource(this.tokenSource);
             if (this.Logger.IsNotNull())
             {

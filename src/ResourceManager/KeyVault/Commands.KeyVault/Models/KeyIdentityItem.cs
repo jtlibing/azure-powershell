@@ -13,36 +13,47 @@
 // ----------------------------------------------------------------------------------
 
 using System;
-using Microsoft.Azure.Commands.KeyVault.WebKey;
-using Client = Microsoft.Azure.Commands.KeyVault.Client;
-using Microsoft.Azure.Commands.KeyVault.Properties;
+using System.Collections;
+using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 
 namespace Microsoft.Azure.Commands.KeyVault.Models
 {
     public class KeyIdentityItem : ObjectIdentifier
     {
-        internal KeyIdentityItem(Client.KeyItem clientKeyItem, VaultUriHelper vaultUriHelper)
+        internal KeyIdentityItem(Azure.KeyVault.Models.KeyItem keyItem, VaultUriHelper vaultUriHelper)
         {
-            if (clientKeyItem == null)
-            {
-                throw new ArgumentNullException("clientKeyItem");
-            }
-            if (String.IsNullOrEmpty(clientKeyItem.Kid) || clientKeyItem.Attributes == null)
-            {
-                throw new ArgumentException(Resources.InvalidKeyBundle);
-            }
+            if (keyItem == null)
+                throw new ArgumentNullException("keyItem");
+            if (keyItem.Attributes == null)
+                throw new ArgumentException(KeyVaultProperties.Resources.InvalidKeyAttributes);
+            if (keyItem.Identifier == null)
+                throw new ArgumentException(KeyVaultProperties.Resources.InvalidKeyIdentifier);
 
-            SetObjectIdentifier(vaultUriHelper, new Client.KeyIdentifier(clientKeyItem.Kid));
+            SetObjectIdentifier(vaultUriHelper, keyItem.Identifier);
 
-            var attribute = new KeyAttributes(
-                clientKeyItem.Attributes.Enabled,
-                clientKeyItem.Attributes.Expires,
-                clientKeyItem.Attributes.NotBefore);
+            Enabled = keyItem.Attributes.Enabled;
+            Expires = keyItem.Attributes.Expires;
+            NotBefore = keyItem.Attributes.NotBefore;
+            Created = keyItem.Attributes.Created;
+            Updated = keyItem.Attributes.Updated;
+            Tags = (keyItem.Tags == null) ? null : keyItem.Tags.ConvertToHashtable();
+        }
 
-            Enabled = attribute.Enabled;
-            Expires = attribute.Expires;
-            NotBefore = attribute.NotBefore;
-            Id = clientKeyItem.Kid;
+        internal KeyIdentityItem(KeyBundle keyBundle)
+        {
+            if (keyBundle == null)
+                throw new ArgumentNullException("keyBundle");
+            if (keyBundle.Attributes == null)
+                throw new ArgumentException(KeyVaultProperties.Resources.InvalidKeyAttributes);
+
+            SetObjectIdentifier(keyBundle);
+
+            Enabled = keyBundle.Attributes.Enabled;
+            Expires = keyBundle.Attributes.Expires;
+            NotBefore = keyBundle.Attributes.NotBefore;
+            Created = keyBundle.Attributes.Created;
+            Updated = keyBundle.Attributes.Updated;
+            Tags = keyBundle.Attributes.Tags;
         }
 
         public bool? Enabled { get; set; }
@@ -50,5 +61,16 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
         public DateTime? Expires { get; set; }
 
         public DateTime? NotBefore { get; set; }
+
+        public DateTime? Created { get; private set; }
+
+        public DateTime? Updated { get; private set; }
+
+        public Hashtable Tags { get; set; }
+
+        public string TagsTable
+        {
+            get { return (Tags == null) ? null : Tags.ConvertToTagsTable(); }
+        }
     }
 }

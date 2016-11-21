@@ -17,7 +17,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Properties;
 using Microsoft.WindowsAzure.Management.Sql;
 using Microsoft.WindowsAzure.Management.Sql.Models;
@@ -26,7 +26,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
 {
     using DatabaseCopyModel = Model.DatabaseCopy;
     using WamlDatabaseCopy = Management.Sql.Models.DatabaseCopy;
-    using Microsoft.Azure.Common.Authentication;
+    using Microsoft.Azure.Commands.Common.Authentication;
     using Microsoft.Azure;
 
     /// <summary>
@@ -51,7 +51,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
         /// </summary>
         private readonly AzureSubscription subscription;
 
-        private AzureProfile profile;
+        private AzureSMProfile profile;
 
         #endregion
 
@@ -61,7 +61,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
         /// <param name="subscription">The subscription used to connect and authenticate.</param>
         /// <param name="serverName">The name of the server to connect to.</param>
         private ServerDataServiceCertAuth(
-            AzureProfile profile,
+            AzureSMProfile profile,
             AzureSubscription subscription,
             string serverName)
         {
@@ -116,7 +116,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
         /// <returns>An instance of <see cref="ServerDataServiceCertAuth"/> class.</returns>
         public static ServerDataServiceCertAuth Create(
             string serverName,
-            AzureProfile profile,
+            AzureSMProfile profile,
             AzureSubscription subscription)
         {
             if (string.IsNullOrEmpty(serverName))
@@ -210,6 +210,55 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
             return database;
         }
 
+
+        /// <summary>
+        /// Retrieve a specific database from the current context
+        /// </summary>
+        /// <param name="databaseName">The name of the database to retrieve</param>
+        /// <returns>A database object</returns>
+        public IEnumerable<DatabaseUsageMetric> GetDatabaseUsages(string databaseName)
+        {
+            this.clientRequestId = SqlDatabaseCmdletBase.GenerateClientTracingId();
+
+            // Get the SQL management client
+            SqlManagementClient sqlManagementClient = AzureSession.ClientFactory.CreateClient<SqlManagementClient>(this.profile, subscription, AzureEnvironment.Endpoint.ServiceManagement);
+            this.AddTracingHeaders(sqlManagementClient);
+
+            // Retrieve the specified database
+            DatabaseUsagesListResponse response = sqlManagementClient.Databases.GetUsages(
+                this.serverName,
+                databaseName);
+
+            // Construct the resulting Database object
+            IEnumerable<DatabaseUsageMetric> metrics = CreateMetricsFromResponse(response);
+            return metrics;
+        }
+
+        /// <summary>
+        /// Converts a DatabaseUsagesListResponse into IEnumerable<DatabaseUsageMetric>
+        /// </summary>
+        /// <param name="response">The response to convert</param>
+        /// <returns></returns>
+        private IEnumerable<DatabaseUsageMetric> CreateMetricsFromResponse(DatabaseUsagesListResponse response)
+        {
+            List<DatabaseUsageMetric> list = new List<DatabaseUsageMetric>();
+
+            foreach (var usage in response.Usages)
+            {
+                list.Add(new DatabaseUsageMetric()
+                    {
+                        CurrentValue = usage.CurrentValue,
+                        Limit = usage.Limit,
+                        Name = usage.Name,
+                        NextResetTime = usage.NextResetTime,
+                        ResourceName = usage.ResourceName,
+                        Unit = usage.Unit,
+                    });
+            }
+
+            return list;
+        }
+
         /// <summary>
         /// Creates a new sql database.
         /// </summary>
@@ -288,7 +337,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
                 MaximumDatabaseSizeInBytes = databaseMaxSizeInBytes,
             };
             parameters.Edition = (database.Database.Edition ?? string.Empty);
-            if(databaseEdition.HasValue)
+            if (databaseEdition.HasValue)
             {
                 if (databaseEdition != DatabaseEdition.None)
                 {
@@ -296,7 +345,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
                 }
             }
             parameters.ServiceObjectiveId = database.Database.ServiceObjectiveId;
-            if(serviceObjective != null)
+            if (serviceObjective != null)
             {
                 parameters.ServiceObjectiveId = serviceObjective.Id.ToString();
             }
@@ -405,7 +454,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
         public ServiceObjective GetServiceObjective(ServiceObjective serviceObjectiveToRefresh)
         {
             var serviceObjective = Objectives.Where(s => s.Id == serviceObjectiveToRefresh.Id).FirstOrDefault();
-            
+
             if (serviceObjective == null)
             {
                 throw new InvalidOperationException(
@@ -680,7 +729,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
                 this.ServerName,
                 localDatabaseName,
                 databaseCopy.EntityId,
-                new DatabaseCopyUpdateParameters() {IsForcedTerminate = forcedTermination});
+                new DatabaseCopyUpdateParameters() { IsForcedTerminate = forcedTermination });
 
             sqlManagementClient.DatabaseCopies.Delete(
                 this.ServerName,
@@ -1080,10 +1129,10 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
             }
 
             // Parse the service objective information
-            if(!string.IsNullOrEmpty(assignedServiceObjectiveId))
+            if (!string.IsNullOrEmpty(assignedServiceObjectiveId))
             {
                 Guid guid = Guid.Empty;
-                if(Guid.TryParse(assignedServiceObjectiveId, out guid))
+                if (Guid.TryParse(assignedServiceObjectiveId, out guid))
                 {
                     result.AssignedServiceObjectiveId = guid;
                 }
@@ -1121,7 +1170,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server
                     }
                 }
             }
-            if(!string.IsNullOrEmpty(state))
+            if (!string.IsNullOrEmpty(state))
             {
                 DatabaseStatus status;
                 if (Enum.TryParse<DatabaseStatus>(state, true, out status))

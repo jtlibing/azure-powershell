@@ -21,11 +21,12 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.PowerShellTestAbstraction.Concretes;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.PowerShellTestAbstraction.Interfaces;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.Simulators;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Management.HDInsight;
 using Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.Commands.BaseCommandInterfaces;
 using Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.Commands.CommandImplementations;
@@ -35,8 +36,9 @@ using Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.GetAzureHDInsightCluste
 using Microsoft.WindowsAzure.Management.HDInsight.Cmdlet.ServiceLocation;
 using Microsoft.WindowsAzure.Management.HDInsight.Framework.Core;
 using Microsoft.WindowsAzure.Management.HDInsight.Logging;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
 using System.IO;
+using Microsoft.Azure.ServiceManagemenet.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.Utilities
 {
@@ -48,7 +50,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.Utilities
             )]
         public static readonly IntegrationTestManager TestManager = new IntegrationTestManager();
 
-        private static bool IsInitialized = true;
+        private static bool IsInitialized = false;
         internal static Dictionary<string, string> testToClusterMap = new Dictionary<string, string>();
 
         protected static string ClusterPrefix;
@@ -77,7 +79,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.Utilities
             };
             newSubscription.Properties[AzureSubscription.Property.Default] = "True";
 
-            ProfileClient profileClient = new ProfileClient(new AzureProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
+            ProfileClient profileClient = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
             profileClient.Profile.Accounts[certificateThumbprint1] = 
                 new AzureAccount()
                 {
@@ -158,7 +160,9 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.Utilities
             cmdletRunManager.RegisterType<IAzureHDInsightClusterManagementClientFactory, AzureHDInsightClusterManagementClientSimulatorFactory>();
             cmdletRunManager.RegisterType<IAzureHDInsightJobSubmissionClientFactory, AzureHDInsightJobSubmissionClientSimulatorFactory>();
             var testManager = new IntegrationTestManager();
-
+            AzureSession.DataStore = new MemoryDataStore();
+            var profile = new AzureSMProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile));
+            AzureSMCmdlet.CurrentProfile = profile;
             TestCredentials = testManager.GetCredentials("default");
             if (TestCredentials == null)
             {
@@ -190,7 +194,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.HDInsight.Utilities
             var cmdletManager = ServiceLocator.Instance.Locate<IServiceLocationSimulationManager>();
             cmdletManager.MockingLevel = ServiceLocationMockingLevel.ApplyFullMocking;
             AzureSession.AuthenticationFactory = new MockTokenAuthenticationFactory();
-            AzureSession.DataStore = new MockDataStore();
+            AzureSession.DataStore = new MemoryDataStore();
         }
 
         public void ApplyIndividualTestMockingOnly()

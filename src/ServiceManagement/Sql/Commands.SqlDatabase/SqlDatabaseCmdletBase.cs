@@ -15,19 +15,19 @@
 using System;
 using System.Globalization;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Management.Sql;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
 
 namespace Microsoft.WindowsAzure.Commands.SqlDatabase
 {
     /// <summary>
     /// The base class for all Microsoft Azure Sql Database Management Cmdlets
     /// </summary>
-    public abstract class SqlDatabaseCmdletBase : AzurePSCmdlet
+    public abstract class SqlDatabaseCmdletBase : AzureSMCmdlet
     {
         /// <summary>
         /// Stores the session Id for all the request made in this session.

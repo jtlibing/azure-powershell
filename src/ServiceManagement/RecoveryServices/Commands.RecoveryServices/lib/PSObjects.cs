@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure.Portal.RecoveryServices.Models.Common;
 using Microsoft.WindowsAzure.Management.RecoveryServices.Models;
 using Microsoft.WindowsAzure.Management.SiteRecovery.Models;
@@ -435,9 +435,10 @@ namespace Microsoft.Azure.Commands.RecoveryServices.SiteRecovery
         public string FabricType { get; set; }
 
         /// <summary>
-        /// Gets or sets the type e.g. VMM, HyperVSite etc.
+        /// Gets or sets the type e.g. VMM, HyperVSite, etc.
         /// </summary>
         [DataMember]
+        [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed.")]
         public string Type { get; set; }
 
         /// <summary>

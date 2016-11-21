@@ -14,17 +14,18 @@
 
 using System.IO;
 using System.Management.Automation;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.ServiceBus;
 using Microsoft.WindowsAzure.Commands.Utilities.Websites;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
+using System.Reflection;
 
 namespace Microsoft.WindowsAzure.Commands.CloudService
 {
     [Cmdlet(VerbsDiagnostic.Test, "AzureName"), OutputType(typeof(bool))]
-    public class TestAzureNameCommand : AzurePSCmdlet, IModuleAssemblyInitializer
+    public class TestAzureNameCommand : AzureSMCmdlet, IModuleAssemblyInitializer
     {
         internal ServiceBusClientExtensions ServiceBusClient { get; set; }
         internal ICloudServiceClient CloudServiceClient { get; set; }
@@ -111,17 +112,26 @@ namespace Microsoft.WindowsAzure.Commands.CloudService
             }
             else
             {
-                ServiceBusClient = ServiceBusClient ?? new ServiceBusClientExtensions(Profile, Profile.Context.Subscription);
+                ServiceBusClient = ServiceBusClient ?? new ServiceBusClientExtensions(Profile);
                 IsServiceBusNamespaceAvailable(Profile.Context.Subscription.Id.ToString(), Name);
             }
         }
 
         public void OnImport()
         {
-            System.Management.Automation.PowerShell invoker = null;
-            invoker = System.Management.Automation.PowerShell.Create(RunspaceMode.CurrentRunspace);
-            invoker.AddScript(File.ReadAllText(FileUtilities.GetContentFilePath("ServiceManagementStartup.ps1")));
-            invoker.Invoke();
+            try
+            {
+                System.Management.Automation.PowerShell invoker = null;
+                invoker = System.Management.Automation.PowerShell.Create(RunspaceMode.CurrentRunspace);
+                invoker.AddScript(File.ReadAllText(FileUtilities.GetContentFilePath(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "ServiceManagementStartup.ps1")));
+                invoker.Invoke();
+            }
+            catch
+            {
+                // This will throw exception for tests, ignore.
+            }
         }
     }
 }

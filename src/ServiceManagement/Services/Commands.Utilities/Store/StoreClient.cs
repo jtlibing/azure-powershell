@@ -19,7 +19,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.MarketplaceServiceReference;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
@@ -32,8 +32,8 @@ using Microsoft.WindowsAzure.Management.Store.Models;
 namespace Microsoft.WindowsAzure.Commands.Utilities.Store
 {
     using Resource = Management.Store.Models.CloudServiceListResponse.CloudService.AddOnResource;
-    using Microsoft.Azure.Common.Authentication.Models;
-    using Microsoft.Azure.Common.Authentication;
+    using Microsoft.Azure.Commands.Common.Authentication.Models;
+    using Microsoft.Azure.Commands.Common.Authentication;
 
     public class StoreClient
     {
@@ -139,7 +139,7 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Store
         /// Creates new instance from the store client.
         /// </summary>
         /// <param name="subscription">The Microsoft Azure subscription</param>
-        public StoreClient(AzureProfile profile, AzureSubscription subscription)
+        public StoreClient(AzureSMProfile profile, AzureSubscription subscription)
             : this(
                 subscription,
                 AzureSession.ClientFactory.CreateClient<ComputeManagementClient>(profile, subscription, AzureEnvironment.Endpoint.ServiceManagement),

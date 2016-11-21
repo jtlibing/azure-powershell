@@ -12,29 +12,30 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 
 namespace Microsoft.Azure.Commands.DataFactories.Test
 {
     public class HubTests : DataFactoriesScenarioTestsBase
     {
+        public HubTests(Xunit.Abstractions.ITestOutputHelper output)
+        {
+            Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
+        }
+
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestHub()
         {
             RunPowerShellTest("Test-Hub");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestHubWithDataFactoryParameter()
         {
             RunPowerShellTest("Test-HubWithDataFactoryParameter");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestHubPiping()
         {
             RunPowerShellTest("Test-HubPiping");

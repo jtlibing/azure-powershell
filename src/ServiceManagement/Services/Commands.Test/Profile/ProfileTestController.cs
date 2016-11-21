@@ -12,9 +12,10 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Common.Authentication;
-using Microsoft.Azure.Common.Authentication.Factories;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Factories;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Test.HttpRecorder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Profile;
@@ -30,15 +31,7 @@ namespace Microsoft.Azure.Commands.Test.Profile
     {
         private TestEnvironmentFactory testFactory;
         private EnvironmentSetupHelper helper;
-
-        public static ProfileTestController NewInstance 
-        { 
-            get
-            {
-                return new ProfileTestController();
-            }
-        }
-
+        
         public static ProfileTestController NewRdfeInstance 
         { 
             get
@@ -59,11 +52,6 @@ namespace Microsoft.Azure.Commands.Test.Profile
         {
             get; 
             private set; 
-        }
-        public ProfileTestController()
-        {
-            Module = AzureModule.AzureResourceManager;
-            helper = new EnvironmentSetupHelper();
         }
 
         public ProfileTestController(AzureModule module)
@@ -156,6 +144,7 @@ namespace Microsoft.Azure.Commands.Test.Profile
             string callingClassType,
             string mockName)
         {
+            HttpMockServer.Matcher = new PermissiveRecordMatcher();
             using (UndoContext context = UndoContext.Current)
             {
                 context.Start(callingClassType, mockName);

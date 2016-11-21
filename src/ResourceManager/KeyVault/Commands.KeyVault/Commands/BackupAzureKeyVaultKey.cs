@@ -13,20 +13,24 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.KeyVault.Models;
-using Microsoft.Azure.Commands.KeyVault.Properties;
 using System;
 using System.IO;
 using System.Management.Automation;
+using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 
-namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
+namespace Microsoft.Azure.Commands.KeyVault
 {
     /// <summary>
     /// Requests that a backup of the specified key be downloaded and stored to a file
     /// </summary>
-    [Cmdlet(VerbsData.Backup, "AzureKeyVaultKey")]
+    [Cmdlet(VerbsData.Backup, "AzureKeyVaultKey",
+        SupportsShouldProcess = true, 
+        HelpUri = Constants.KeyVaultHelpUri)]
     [OutputType(typeof(String))]
     public class BackupAzureKeyVaultKey : KeyVaultCmdletBase
     {
+        public static readonly DateTime EpochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
         #region Input Parameter Definitions
 
         /// <summary>
@@ -36,7 +40,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
                    Position = 0,
                    ValueFromPipelineByPropertyName = true,
                    HelpMessage = "Vault name. Cmdlet constructs the FQDN of a vault based on the name and currently selected environment.")]
-        [ValidateNotNullOrEmpty]
+        [ValidateNotNullOrEmpty]        
         public string VaultName { get; set; }
 
         /// <summary>
@@ -46,8 +50,8 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
                    Position = 1,
                    ValueFromPipelineByPropertyName = true,
                    HelpMessage = "Key name. Cmdlet constructs the FQDN of a key from vault name, currently selected environment and key name.")]
-        [ValidateNotNullOrEmpty]
-        [Alias("KeyName")]
+        [ValidateNotNullOrEmpty]        
+        [Alias(Constants.KeyName)]
         public string Name { get; set; }
 
         /// <summary>
@@ -64,25 +68,36 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
 
         public override void ExecuteCmdlet()
         {
-            if (string.IsNullOrEmpty(OutputFile))
+            if (ShouldProcess(Name, Properties.Resources.BackupKey))
             {
-                OutputFile = GetDefaultFile();
+                if (string.IsNullOrEmpty(OutputFile))
+                {
+                    OutputFile = GetDefaultFile();
+                }
+
+                var filePath = ResolvePath(OutputFile);
+
+                var backupBlobPath = this.DataServiceClient.BackupKey(VaultName, Name, filePath);
+
+                this.WriteObject(backupBlobPath);
             }
-
-            var filePath = ResolvePath(OutputFile, Resources.BackupKeyFileNotFound);
-
-            var backupBlobPath = this.DataServiceClient.BackupKey(VaultName, Name, filePath);
-
-            this.WriteObject(backupBlobPath);
         }
 
         private string GetDefaultFile()
         {
-            var currentPath = CurrentPath();
-            var filename = string.Format("{0}\\backup-{1}-{2}-{3}", currentPath, VaultName, Name, Microsoft.Azure.Commands.KeyVault.Client.UnixEpoch.Now());
-            File.Create(filename).Dispose();
+            var currentPath = CurrentPath();            
+            var filename = string.Format("{0}\\backup-{1}-{2}-{3}", currentPath, VaultName, Name, DateTime.UtcNow.Subtract(EpochDate).TotalSeconds);
             return filename;
         }
 
+        private string ResolvePath(string filePath)
+        {
+            FileInfo keyFile = new FileInfo(this.GetUnresolvedProviderPathFromPSPath(filePath));
+            if (keyFile.Exists)
+            {
+                throw new IOException(string.Format(KeyVaultProperties.Resources.BackupKeyFileAlreadyExists, filePath));
+            }
+            return keyFile.FullName;
+        }
     }
 }

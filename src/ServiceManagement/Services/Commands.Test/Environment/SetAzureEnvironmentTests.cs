@@ -15,28 +15,31 @@
 using System;
 using System.Collections.Generic;
 using System.Management.Automation;
+using Microsoft.WindowsAzure.Commands.Profile.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Profile;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
 using Moq;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
 using System.IO;
+using Microsoft.Azure.ServiceManagemenet.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Environment
 {
     
-    public class SetAzureEnvironmentTests : TestBase, IDisposable
+    public class SetAzureEnvironmentTests : SMTestBase, IDisposable
     {
-        private MockDataStore dataStore;
+        private MemoryDataStore dataStore;
 
         public SetAzureEnvironmentTests()
         {
-            dataStore = new MockDataStore();
+            dataStore = new MemoryDataStore();
             AzureSession.DataStore = dataStore;
         }
 
@@ -46,11 +49,13 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
         }
 
         [Fact]
+        // TODO: fix flaky test
+        //[Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetsAzureEnvironment()
         {
             Mock<ICommandRuntime> commandRuntimeMock = new Mock<ICommandRuntime>();
             string name = "Katal";
-            ProfileClient client = new ProfileClient(new AzureProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
+            ProfileClient client = new ProfileClient(new AzureSMProfile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AzureSession.ProfileFile)));
             client.AddOrSetEnvironment(new AzureEnvironment { Name = name });
 
             SetAzureEnvironmentCommand cmdlet = new SetAzureEnvironmentCommand()
@@ -64,12 +69,13 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
                 GalleryEndpoint = "galleryendpoint"
             };
 
+            cmdlet.Profile = client.Profile;
             cmdlet.InvokeBeginProcessing();
             cmdlet.ExecuteCmdlet();
             cmdlet.InvokeEndProcessing();
 
-            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<AzureEnvironment>()), Times.Once());
-            client = new ProfileClient(new AzureProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
+            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<PSAzureEnvironment>()), Times.Once());
+            client = new ProfileClient(new AzureSMProfile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AzureSession.ProfileFile)));
             AzureEnvironment env = client.Profile.Environments["KaTaL"];
             Assert.Equal(env.Name.ToLower(), cmdlet.Name.ToLower());
             Assert.Equal(env.Endpoints[AzureEnvironment.Endpoint.PublishSettingsFileUrl], cmdlet.PublishSettingsFileUrl);
@@ -79,6 +85,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ThrowsWhenSettingPublicEnvironment()
         {
             Mock<ICommandRuntime> commandRuntimeMock = new Mock<ICommandRuntime>();
@@ -91,9 +98,12 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
                     Name = name,
                     PublishSettingsFileUrl = "http://microsoft.com"
                 };
-
-                cmdlet.InvokeBeginProcessing();
-                Assert.Throws<ArgumentException>(() => cmdlet.ExecuteCmdlet());
+                var savedValue = AzureEnvironment.PublicEnvironments[name].GetEndpoint(AzureEnvironment.Endpoint.PublishSettingsFileUrl);
+               cmdlet.InvokeBeginProcessing();
+                Assert.Throws<InvalidOperationException>(() => cmdlet.ExecuteCmdlet());
+                var newValue = cmdlet.ProfileClient.Profile.Environments[name].GetEndpoint(AzureEnvironment.Endpoint.PublishSettingsFileUrl);
+                Assert.Equal(savedValue, newValue);
+                Assert.NotEqual(cmdlet.PublishSettingsFileUrl, newValue);
             }
         }
 

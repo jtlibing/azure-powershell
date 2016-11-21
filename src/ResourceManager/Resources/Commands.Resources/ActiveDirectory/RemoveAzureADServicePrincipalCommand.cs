@@ -23,34 +23,39 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
     /// <summary>
     /// Removes the service principal.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureADServicePrincipal"), OutputType(typeof(PSADServicePrincipal))]
+    [Cmdlet(VerbsCommon.Remove, "AzureRmADServicePrincipal", SupportsShouldProcess = true), 
+        OutputType(typeof(PSADServicePrincipal))]
     public class RemoveAzureADServicePrincipalCommand : ActiveDirectoryBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ObjectId,
                   HelpMessage = "The service principal object id.")]
+        [Alias("PrincipalId")]
         public Guid ObjectId { get; set; }
 
         [Parameter(Mandatory = false)]
-        public SwitchParameter Force { get; set; }
-
-        [Parameter(Mandatory = false)]
         public SwitchParameter PassThru { get; set; }
+        
+        [Parameter(Mandatory = false)]
+        public SwitchParameter Force { get; set; }
 
         public override void ExecuteCmdlet()
         {
-            PSADServicePrincipal servicePrincipal = null;
-
-            ConfirmAction(
-              Force.IsPresent,
-              string.Format(ProjectResources.RemovingServicePrincipal, ObjectId),
-              ProjectResources.RemoveServicePrincipal,
-              null,
-              () => servicePrincipal = ActiveDirectoryClient.RemoveServicePrincipal(ObjectId.ToString()));
-
-            if (PassThru)
+            ExecutionBlock(() =>
             {
-                WriteObject(servicePrincipal);
-            }
+                PSADServicePrincipal servicePrincipal = null;
+
+                ConfirmAction(
+                    Force.IsPresent,
+                    string.Format(ProjectResources.RemovingServicePrincipal, ObjectId.ToString()),
+                    ProjectResources.RemoveServicePrincipal,
+                    ObjectId.ToString(),
+                    () => servicePrincipal = ActiveDirectoryClient.RemoveServicePrincipal(ObjectId.ToString()));
+
+                if (PassThru)
+                {
+                    WriteObject(servicePrincipal);
+                }
+            });
         }
     }
 }

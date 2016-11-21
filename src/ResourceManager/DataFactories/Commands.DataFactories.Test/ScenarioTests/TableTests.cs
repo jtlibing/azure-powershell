@@ -12,43 +12,30 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 
 namespace Microsoft.Azure.Commands.DataFactories.Test
 {
     public class TableTests : DataFactoriesScenarioTestsBase
     {
+        public TableTests(Xunit.Abstractions.ITestOutputHelper output)
+        {
+            Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
+        }
+
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestTable()
         {
             RunPowerShellTest("Test-Table");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestTableWithDataFactoryParameter()
         {
             RunPowerShellTest("Test-TableWithDataFactoryParameter");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestGetTableWithEmptyName()
-        {
-            RunPowerShellTest("Test-GetTableWithEmptyName");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestGetTableWithWhiteSpaceName()
-        {
-            RunPowerShellTest("Test-GetTableWithWhiteSpaceName");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestTablePiping()
         {
             RunPowerShellTest("Test-TablePiping");

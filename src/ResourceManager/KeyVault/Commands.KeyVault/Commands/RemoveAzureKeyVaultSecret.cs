@@ -12,17 +12,17 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Management.Automation;
 using Microsoft.Azure.Commands.KeyVault.Models;
-using Microsoft.Azure.Commands.KeyVault.Properties;
 using System.Globalization;
+using System.Management.Automation;
+using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 
-namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
+namespace Microsoft.Azure.Commands.KeyVault
 {
     [Cmdlet(VerbsCommon.Remove, "AzureKeyVaultSecret",
         SupportsShouldProcess = true,
-        ConfirmImpact = ConfirmImpact.High)]
+         ConfirmImpact = ConfirmImpact.High,
+        HelpUri = Constants.KeyVaultHelpUri)]
     [OutputType(typeof(Secret))]
     public class RemoveAzureKeyVaultSecret : KeyVaultCmdletBase
     {
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Secret name. Cmdlet constructs the FQDN of a secret from vault name, currently selected environment and secret name.")]
         [ValidateNotNullOrEmpty]
-        [Alias("SecretName")]
+        [Alias(Constants.SecretName)]
         public string Name { get; set; }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
         public SwitchParameter Force { get; set; }
 
         [Parameter(Mandatory = false,
-            HelpMessage = "Cmdlet does not return object by default. If this switch is specified, return a bool to enable pipeline.")]
+            HelpMessage = "Cmdlet does not return an object by default. If this switch is specified, cmdlet returns the secret that was deleted.")]
         public SwitchParameter PassThru { get; set; }
 
         #endregion
@@ -69,16 +69,16 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
                 Force.IsPresent,
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    Resources.RemoveSecretWarning,
+                    KeyVaultProperties.Resources.RemoveSecretWarning,
                     Name),
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    Resources.RemoveSecretWhatIfMessage,
+                    KeyVaultProperties.Resources.RemoveSecretWhatIfMessage,
                     Name),
                 Name,
                () => { secret = DataServiceClient.DeleteSecret(VaultName, Name); });
 
-            if (PassThru.IsPresent)
+            if (PassThru)
             {
                 WriteObject(secret);
             }

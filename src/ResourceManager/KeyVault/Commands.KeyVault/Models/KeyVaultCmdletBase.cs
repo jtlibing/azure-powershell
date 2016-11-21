@@ -12,20 +12,14 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Common.Authentication;
-using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using System;
-using System.IO;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.ResourceManager.Common;
 using System.Net.Http;
 
 namespace Microsoft.Azure.Commands.KeyVault.Models
 {
-    public class KeyVaultCmdletBase : AzurePSCmdlet
-    {        
-        public KeyVaultCmdletBase()
-        {        
-        }
-
+    public class KeyVaultCmdletBase : AzureRMCmdlet
+    {
         internal IKeyVaultDataServiceClient DataServiceClient
         {
             get
@@ -34,8 +28,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
                 {
                     this.dataServiceClient = new KeyVaultDataServiceClient(
                         AzureSession.AuthenticationFactory,
-                        Profile.Context,
-                        new HttpClient());
+                        DefaultContext);
                 }
 
                 return this.dataServiceClient;
@@ -46,15 +39,6 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
             }
         }
 
-        internal string ResolvePath(string filePath, string notFoundMessage)
-        {
-            FileInfo keyFile = new FileInfo(this.GetUnresolvedProviderPathFromPSPath(filePath));
-            if (!keyFile.Exists)
-            {
-                throw new FileNotFoundException(string.Format(notFoundMessage, filePath));
-            }
-            return keyFile.FullName;
-        }
 
         private IKeyVaultDataServiceClient dataServiceClient;
     }

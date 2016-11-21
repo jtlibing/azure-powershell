@@ -18,8 +18,8 @@ using System.Globalization;
 using System.Linq;
 using System.Management.Automation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Azure.Common.Authentication.Models;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Properties;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Common;
@@ -31,7 +31,7 @@ using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.Database.Cmdlet
 {
     [TestClass]
-    public class NewAzureSqlDatabaseServerContextTests : TestBase
+    public class NewAzureSqlDatabaseServerContextTests : SMTestBase
     {
         [TestCleanup]
         public void CleanupTest()
@@ -43,7 +43,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.Database.Cm
         public void TestGetManageUrl()
         {
             NewAzureSqlDatabaseServerContext contextCmdlet = new NewAzureSqlDatabaseServerContext();
-            var profile = new AzureProfile();
+            var profile = new AzureSMProfile();
             var account = new AzureAccount {Id = "mockAccount", Type = AzureAccount.AccountType.User};
             var subscription = new AzureSubscription
             {
@@ -288,7 +288,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.Database.Cm
                 (expected, actual) =>
                 {
                     Assert.AreEqual(expected.RequestInfo.Method, actual.Method);
-                    Assert.AreEqual(expected.RequestInfo.UserAgent, actual.UserAgent);
+                    Assert.IsNotNull(actual.UserAgent);
                     switch (expected.Index)
                     {
                         // Request 0-2: Create context with both ManageUrl and ServerName overriden

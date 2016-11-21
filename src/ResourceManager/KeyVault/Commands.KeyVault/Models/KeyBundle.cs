@@ -12,10 +12,11 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.KeyVault.WebKey;
 using System;
-using Microsoft.Azure.Commands.KeyVault.WebKey;
-using Client = Microsoft.Azure.Commands.KeyVault.Client;
-using Microsoft.Azure.Commands.KeyVault.Properties;
+using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
+using Microsoft.Azure.KeyVault.Models;
+using System.Linq;
 
 namespace Microsoft.Azure.Commands.KeyVault.Models
 {
@@ -24,33 +25,30 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
         public KeyBundle()
         { }
 
-        internal KeyBundle(Client.KeyBundle clientKeyBundle, VaultUriHelper vaultUriHelper)
+        internal KeyBundle(Azure.KeyVault.Models.KeyBundle keyBundle, VaultUriHelper vaultUriHelper)
         {
-            if (clientKeyBundle == null)
-            {
-                throw new ArgumentNullException("clientKeyBundle");
-            }            
-            if (clientKeyBundle.Key == null || clientKeyBundle.Attributes == null)
-            {
-                throw new ArgumentException(Resources.InvalidKeyBundle);
-            }
+            if (keyBundle == null)
+                throw new ArgumentNullException("keyBundle");
+            if (keyBundle.Key == null || keyBundle.Attributes == null)
+                throw new ArgumentException(KeyVaultProperties.Resources.InvalidKeyBundle);
 
-            SetObjectIdentifier(vaultUriHelper, new Client.KeyIdentifier(clientKeyBundle.Key.Kid));
+            SetObjectIdentifier(vaultUriHelper, keyBundle.KeyIdentifier);
 
-            Key = clientKeyBundle.Key;
+            Key = keyBundle.Key;
             Attributes = new KeyAttributes(
-                clientKeyBundle.Attributes.Enabled,
-                clientKeyBundle.Attributes.Expires, 
-                clientKeyBundle.Attributes.NotBefore, 
-                clientKeyBundle.Key.Kty, 
-                clientKeyBundle.Key.KeyOps);
-
-            Id = clientKeyBundle.Key.Kid;
+                keyBundle.Attributes.Enabled,
+                keyBundle.Attributes.Expires, 
+                keyBundle.Attributes.NotBefore, 
+                keyBundle.Key.Kty, 
+                keyBundle.Key.KeyOps.ToArray(),
+                keyBundle.Attributes.Created,
+                keyBundle.Attributes.Updated,
+                keyBundle.Tags);
         }
 
         public KeyAttributes Attributes { get; set; }
 
         public JsonWebKey Key { get; set; }
-        
+
     }
 }

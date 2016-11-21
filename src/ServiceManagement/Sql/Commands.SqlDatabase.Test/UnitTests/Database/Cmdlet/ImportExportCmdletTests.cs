@@ -18,7 +18,7 @@ using System.Management.Automation;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.MockServer;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.Server.Cmdlet;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Test.Utilities;
@@ -33,7 +33,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.Database.Cm
     /// Get-AzureSqlDatabaseImportExportStatus cmdlet.
     /// </summary>
     [TestClass]
-    public class ImportExportCmdletTests : TestBase
+    public class ImportExportCmdletTests : SMTestBase
     {
         [TestCleanup]
         public void CleanupTest()

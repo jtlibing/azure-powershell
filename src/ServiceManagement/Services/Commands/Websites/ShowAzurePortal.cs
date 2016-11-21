@@ -14,10 +14,10 @@
 
 using System.Management.Automation;
 using System.Security.Permissions;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
 
 namespace Microsoft.WindowsAzure.Commands.Websites
 {
@@ -25,7 +25,7 @@ namespace Microsoft.WindowsAzure.Commands.Websites
     /// Opens the azure portal.
     /// </summary>
     [Cmdlet(VerbsCommon.Show, "AzurePortal")]
-    public class ShowAzurePortalCommand : AzurePSCmdlet
+    public class ShowAzurePortalCommand : AzureSMCmdlet
     {
         private string name;
 
@@ -74,7 +74,7 @@ namespace Microsoft.WindowsAzure.Commands.Websites
                     string.Format(Resources.WebsiteSufixUrl, Name));
             }
 
-            GeneralUtilities.LaunchWebPage(managementPortalUrl);
+            ProcessHelper.Start(managementPortalUrl);
         }
     }
 }

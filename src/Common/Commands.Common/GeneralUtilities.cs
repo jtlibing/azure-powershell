@@ -13,8 +13,10 @@
 // ----------------------------------------------------------------------------------
 
 using Hyak.Common;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,10 +27,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Permissions;
-using System.ServiceModel.Channels;
 using System.Text;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace Microsoft.WindowsAzure.Commands.Utilities.Common
 {
@@ -49,22 +49,13 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
             return certificates != null && certificates.Count > 0;
         }
 
-        public static string GetNodeModulesPath()
-        {
-            return Path.Combine(
-                FileUtilities.GetAssemblyDirectory(), 
-                Microsoft.WindowsAzure.Commands.Common.Properties.Resources.NodeModulesPath);
-        }
-
-        [PermissionSet(SecurityAction.LinkDemand, Name = "FullTrust")]
-        public static void LaunchWebPage(string target)
-        {
-            ProcessHelper.Start(target);
-        }
-
         public static X509Certificate2 GetCertificateFromStore(string thumbprint)
         {
-            Validate.ValidateStringIsNullOrEmpty(thumbprint, "certificate thumbprint");
+            if (string.IsNullOrWhiteSpace(thumbprint))
+            {
+                throw new ArgumentNullException("certificate thumbprint");
+            }
+
             X509Certificate2Collection certificates;
             if (TryFindCertificatesInStore(thumbprint, StoreLocation.CurrentUser, out certificates) ||
                 TryFindCertificatesInStore(thumbprint, StoreLocation.LocalMachine, out certificates))
@@ -74,7 +65,8 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
             else
             {
                 throw new ArgumentException(string.Format(
-                    Microsoft.Azure.Common.Authentication.Properties.Resources.CertificateNotFoundInStore, 
+                    "Certificate {0} was not found in the certificate store.  Please ensure the referenced " +
+                    "certificate exists in the the LocalMachine\\My or CurrentUser\\My store",
                     thumbprint));
             }
         }
@@ -96,24 +88,6 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
             return false;
         }
 
-        public static string ReadMessageBody(ref Message originalMessage)
-        {
-            StringBuilder strBuilder = new StringBuilder();
-
-            using (MessageBuffer messageBuffer = originalMessage.CreateBufferedCopy(int.MaxValue))
-            {
-                Message message = messageBuffer.CreateMessage();
-                XmlWriter writer = XmlWriter.Create(strBuilder);
-                using (XmlDictionaryWriter dictionaryWriter = XmlDictionaryWriter.CreateDictionaryWriter(writer))
-                {
-                    message.WriteBodyContents(dictionaryWriter);
-                }
-
-                originalMessage = messageBuffer.CreateMessage();
-            }
-
-            return XmlUtilities.Beautify(strBuilder.ToString());
-        }
 
         public static string GetConfiguration(string configurationPath)
         {
@@ -311,7 +285,8 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
 
         public static string GetLog(HttpResponseMessage response)
         {
-            string body = response.Content == null ? string.Empty : FormatString(response.Content.ReadAsStringAsync().Result);
+            string body = response.Content == null ? string.Empty
+                : FormatString(response.Content.ReadAsStringAsync().Result);
 
             return GetHttpResponseLog(
                 response.StatusCode.ToString(),
@@ -321,7 +296,8 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
 
         public static string GetLog(HttpRequestMessage request)
         {
-            string body = request.Content == null ? string.Empty : FormatString(request.Content.ReadAsStringAsync().Result);
+            string body = request.Content == null ? string.Empty
+                : FormatString(request.Content.ReadAsStringAsync().Result);
 
             return GetHttpRequestLog(
                 request.Method.ToString(),
@@ -334,13 +310,41 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
         {
             if (CloudException.IsXml(content))
             {
-                return XmlUtilities.TryFormatXml(content);
+                return TryFormatXml(content);
             }
             else if (CloudException.IsJson(content))
             {
-                return JsonUtilities.TryFormatJson(content);
+                return TryFormatJson(content);
             }
             else
+            {
+                return content;
+            }
+        }
+
+        private static string TryFormatJson(string str)
+        {
+            try
+            {
+                object parsedJson = JsonConvert.DeserializeObject(str);
+                return JsonConvert.SerializeObject(parsedJson,
+                    Newtonsoft.Json.Formatting.Indented);
+            }
+            catch
+            {
+                // can't parse JSON, return the original string
+                return str;
+            }
+        }
+
+        private static string TryFormatXml(string content)
+        {
+            try
+            {
+                XDocument doc = XDocument.Parse(content);
+                return doc.ToString();
+            }
+            catch (Exception)
             {
                 return content;
             }
@@ -413,11 +417,53 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
             return contents;
         }
 
+        /// <summary>
+        /// Pad a string using the given separator string
+        /// </summary>
+        /// <param name="amount">The number of repetitions of the separator</param>
+        /// <param name="separator">The separator string to use</param>
+        /// <returns>A string containing the given number of repetitions of the separator string</returns>
         public static string GenerateSeparator(int amount, string separator)
         {
             StringBuilder result = new StringBuilder();
             while (amount-- != 0) result.Append(separator);
             return result.ToString();
+        }
+
+        /// <summary>
+        /// Ensure the default profile directory exists
+        /// </summary>
+        public static void EnsureDefaultProfileDirectoryExists()
+        {
+            if (!AzureSession.DataStore.DirectoryExists(AzureSession.ProfileDirectory))
+            {
+                AzureSession.DataStore.CreateDirectory(AzureSession.ProfileDirectory);
+            }
+        }
+
+        /// <summary>
+        /// Clear the current storage account from the context - guarantees that only one storage account will be active 
+        /// at a time.
+        /// </summary>
+        /// <param name="clearSMContext">Whether to clear the service management context.</param>
+        public static void ClearCurrentStorageAccount(bool clearSMContext = false)
+        {
+            var RMProfile = AzureRmProfileProvider.Instance.Profile;
+            if (RMProfile != null && RMProfile.Context != null &&
+                RMProfile.Context.Subscription != null && RMProfile.Context.Subscription.IsPropertySet(AzureSubscription.Property.StorageAccount))
+            {
+                RMProfile.Context.Subscription.SetProperty(AzureSubscription.Property.StorageAccount, null);
+            }
+
+            if (clearSMContext)
+            {
+                var SMProfile = AzureSMProfileProvider.Instance.Profile;
+                if (SMProfile != null && SMProfile.Context != null && SMProfile.Context.Subscription != null &&
+                    SMProfile.Context.Subscription.IsPropertySet(AzureSubscription.Property.StorageAccount))
+                {
+                    SMProfile.Context.Subscription.SetProperty(AzureSubscription.Property.StorageAccount, null);
+                }
+            }
         }
     }
 }

@@ -15,6 +15,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Common;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
@@ -23,13 +24,14 @@ using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
-using Microsoft.Azure.Common.Authentication;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.ServiceManagemenet.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
 {
     
-    public class PublishContextTests : TestBase, IDisposable
+    public class PublishContextTests : SMTestBase, IDisposable
     {
         private static AzureServiceWrapper service;
 
@@ -52,8 +54,8 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
             packagePath = service.Paths.CloudPackage;
             configPath = service.Paths.CloudConfiguration;
             settings = ServiceSettingsTestData.Instance.Data[ServiceSettingsState.Default];
-            AzureSession.DataStore = new MockDataStore();
-            ProfileClient client = new ProfileClient(new AzureProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
+            AzureSession.DataStore = new MemoryDataStore();
+            ProfileClient client = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
             AzureSession.DataStore.WriteFile(Test.Utilities.Common.Data.ValidPublishSettings.First(),
                 File.ReadAllText(Test.Utilities.Common.Data.ValidPublishSettings.First()));
             client.ImportPublishSettings(Test.Utilities.Common.Data.ValidPublishSettings.First(), null);
@@ -62,7 +64,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
 
         public void TestCleanup()
         {
-            AzureSession.DataStore = new MockDataStore();
+            AzureSession.DataStore = new MemoryDataStore();
             if (Directory.Exists(Test.Utilities.Common.Data.AzureSdkAppDir))
             {
                 new RemoveAzurePublishSettingsCommand().RemovePublishSettingsProcess(Test.Utilities.Common.Data.AzureSdkAppDir);
@@ -72,6 +74,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         #region settings
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestWithDefaultServiceSettings()
         {
             string label = "MyLabel";
@@ -89,6 +92,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestWithFullServiceSettings()
         {
             string label = "MyLabel";
@@ -113,6 +117,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestNullSettingsFail()
         {
             string label = "MyLabel";
@@ -141,6 +146,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         #region packagePath
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestEmptyPackagePathFail()
         {
             string label = "MyLabel";
@@ -157,6 +163,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestNullPackagePathFail()
         {
             string label = "MyLabel";
@@ -177,6 +184,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         #region configPath
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestEmptyConfigPathFail()
         {
             string label = "MyLabel";
@@ -193,6 +201,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestNullConfigPathFail()
         {
             string label = "MyLabel";
@@ -209,6 +218,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestDoesNotConfigPathFail()
         {
             string label = "MyLabel";
@@ -238,6 +248,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         #region label
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeploymentSettingsTestNullLabelFail()
         {
             string deploymentName = service.ServiceName;

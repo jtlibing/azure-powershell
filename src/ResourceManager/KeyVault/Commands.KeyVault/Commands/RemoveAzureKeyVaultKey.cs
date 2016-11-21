@@ -12,17 +12,17 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Management.Automation;
 using Microsoft.Azure.Commands.KeyVault.Models;
-using Microsoft.Azure.Commands.KeyVault.Properties;
 using System.Globalization;
+using System.Management.Automation;
+using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 
-namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
+namespace Microsoft.Azure.Commands.KeyVault
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureKeyVaultKey", 
-        SupportsShouldProcess = true, 
-        ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Remove, "AzureKeyVaultKey",
+        SupportsShouldProcess = true,
+         ConfirmImpact = ConfirmImpact.High,
+        HelpUri = Constants.KeyVaultHelpUri)]
     [OutputType(typeof(KeyBundle))]
     public class RemoveAzureKeyVaultKey : KeyVaultCmdletBase
     {
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Key name. Cmdlet constructs the FQDN of a key from vault name, currently selected environment and key name.")]
         [ValidateNotNullOrEmpty]
-        [Alias("KeyName")]
+        [Alias(Constants.KeyName)]
         public string Name { get; set; }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
         public SwitchParameter Force { get; set; }
 
         [Parameter(Mandatory = false,
-            HelpMessage = "Cmdlet does not return object by default. If this switch is specified, return a bool to enable pipeline.")]
+            HelpMessage = "Cmdlet does not return an object by default. If this switch is specified, the cmdlet returns the key object that was deleted.")]
         public SwitchParameter PassThru { get; set; }
 
         #endregion
@@ -68,20 +68,19 @@ namespace Microsoft.Azure.Commands.KeyVault.Cmdlets
                 Force.IsPresent,
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    Resources.RemoveKeyWarning,
+                    KeyVaultProperties.Resources.RemoveKeyWarning,
                     Name),
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    Resources.RemoveKeyWhatIfMessage,
+                    KeyVaultProperties.Resources.RemoveKeyWhatIfMessage,
                     Name),
                 Name,
                 () => { keyBundle = DataServiceClient.DeleteKey(VaultName, Name); });
 
-            if (PassThru.IsPresent)
+            if (PassThru)
             {
                 WriteObject(keyBundle);
             }
         }
-      
     }
 }

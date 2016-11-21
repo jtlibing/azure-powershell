@@ -22,11 +22,13 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Common;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Factories;
+using Microsoft.Azure.ServiceManagemenet.Common;
 
 namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.MockServer
 {
@@ -170,21 +172,14 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.MockServer
         /// </summary>
         public static void SetupCertificates()
         {
-            TestingTracingInterceptor.AddToContext();
+            PSTestTracingInterceptor.AddToContext();
             var newGuid = Guid.NewGuid();
-            var profile = new AzureProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile));
-            AzurePSCmdlet.CurrentProfile = profile;
-            AzureSession.DataStore = new MockDataStore();
+            var profile = new AzureSMProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile));
+            AzureSMCmdlet.CurrentProfile = profile;
+            AzureSession.DataStore = new MemoryDataStore();
             AzureSession.AuthenticationFactory = new MockTokenAuthenticationFactory();
             ProfileClient client = new ProfileClient(profile);
-            client.Profile.Subscriptions[newGuid] = new AzureSubscription
-            {
-                Id = newGuid,
-                Name = "test",
-                Environment = EnvironmentName.AzureCloud,
-                Account = "test"
-            };
-            client.Profile.Accounts["test"] = new AzureAccount
+            client.AddOrSetAccount( new AzureAccount
             {
                 Id = "test",
                 Type = AzureAccount.AccountType.User,
@@ -192,8 +187,8 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.MockServer
                         {
                             {AzureAccount.Property.Subscriptions, newGuid.ToString()}
                         }
-            };
-            client.Profile.Accounts[UnitTestHelper.GetUnitTestClientCertificate().Thumbprint] = new AzureAccount
+            });
+            client.AddOrSetAccount( new AzureAccount
             {
                 Id = UnitTestHelper.GetUnitTestClientCertificate().Thumbprint,
                 Type = AzureAccount.AccountType.Certificate,
@@ -201,8 +196,8 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.MockServer
                         {
                             {AzureAccount.Property.Subscriptions, newGuid.ToString()}
                         }
-            };
-            client.Profile.Accounts[UnitTestHelper.GetUnitTestSSLCertificate().Thumbprint] = new AzureAccount
+            });
+            client.AddOrSetAccount( new AzureAccount
             {
                 Id = UnitTestHelper.GetUnitTestSSLCertificate().Thumbprint,
                 Type = AzureAccount.AccountType.Certificate,
@@ -210,7 +205,15 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Test.UnitTests.MockServer
                         {
                             {AzureAccount.Property.Subscriptions, newGuid.ToString()}
                         }
-            };
+            });
+            client.AddOrSetSubscription(new AzureSubscription
+            {
+                Id = newGuid,
+                Name = "test",
+                Environment = EnvironmentName.AzureCloud,
+                Account = "test"
+            });
+
             client.SetSubscriptionAsDefault(newGuid, "test");
             client.Profile.Save();
 

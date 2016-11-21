@@ -28,6 +28,8 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 
         public const string CloudService = "CloudService";
 
+        public const string DiagnosticsExtension = "DiagnosticsExtension";
+
         public const string Management = "Management";
 
         public const string MediaServices = "MediaServices";
@@ -37,6 +39,8 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
         public const string Storage = "Storage";
 
         public const string Store = "Store";
+
+        public const string Sql = "Sql";
 
         public const string ServiceManagement = "ServiceManagement";
 
@@ -53,6 +57,8 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
         public const string KeyVault = "KeyVault";
 
         public const string Network = "Network";
+
+        public const string DevTestLabs = "DevTestLabs";
 
         // Owners
         public const string OneSDK = "OneSDK";

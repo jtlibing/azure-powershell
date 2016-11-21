@@ -12,18 +12,18 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Globalization;
-using System.IO;
-using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.WindowsAzure.Management.Storage;
-using Microsoft.WindowsAzure.Management.Storage.Models;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.WindowsAzure.Storage.Blob;
-
 namespace Microsoft.WindowsAzure.Commands.Common.Storage
 {
+    using Microsoft.WindowsAzure.Management.Storage;
+    using Microsoft.WindowsAzure.Management.Storage.Models;
+    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Auth;
+    using Microsoft.WindowsAzure.Storage.Blob;
+    using Properties;
+    using System;
+    using System.Globalization;
+    using System.IO;
+
     /// <summary>
     /// Wrapper class that encapsulates Blob functionality from the StorageClient API
     /// </summary>
@@ -58,7 +58,7 @@ namespace Microsoft.WindowsAzure.Commands.Common.Storage
             StorageAccountGetResponse storageService = StorageManagementClient.StorageAccounts.Get(parameters.StorageName);
             Uri blobEndpointUri = storageService.StorageAccount.Properties.Endpoints[0];
             return UploadFile(parameters.StorageName,
-                GeneralUtilities.CreateHttpsEndpoint(blobEndpointUri.ToString()),
+                StorageUtilities.CreateHttpsEndpoint(blobEndpointUri.ToString()),
                 storageKey, parameters);
         }
 
@@ -81,9 +81,9 @@ namespace Microsoft.WindowsAzure.Commands.Common.Storage
             if (wasCreated && parameters.ContainerPublic)
             {
                 container.SetPermissions(new BlobContainerPermissions
-                    {
-                        PublicAccess = BlobContainerPublicAccessType.Blob
-                    });
+                {
+                    PublicAccess = BlobContainerPublicAccessType.Blob
+                });
             }
 
             CloudBlockBlob blob = container.GetBlockBlobReference(blobName);
@@ -97,7 +97,7 @@ namespace Microsoft.WindowsAzure.Commands.Common.Storage
                 else
                 {
                     throw new ArgumentException(string.Format(CultureInfo.CurrentCulture,
-                        Commands.Common.Properties.Resources.BlobAlreadyExistsInTheAccount, blobName));
+                        Resources.BlobAlreadyExistsInTheAccount, blobName));
                 }
             }
 

@@ -12,13 +12,13 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.WindowsAzure.Storage.Blob;
-
 namespace Microsoft.WindowsAzure.Commands.Common.Storage
 {
+    using Microsoft.WindowsAzure.Storage.Blob;
+
     public class BlobUploadParameters
     {
-        public string StorageName {get; set;}
+        public string StorageName { get; set; }
         public string FileLocalPath { get; set; }
         public string FileRemoteName { get; set; }
         public string ContainerName { get; set; }
