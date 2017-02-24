@@ -19,6 +19,12 @@
 -->
 ## Current Release
 
+## Version 2.6.0
+
+## Version 2.5.0
+
+## Version 2.4.0
+
 ## Version 2.3.0
 * Add-AzureRmAccount
     - Add position for Credential parameter so the following command is allowed: Add-AzureRmAccount (Get-Credential)

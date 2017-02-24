@@ -242,12 +242,22 @@ namespace Microsoft.Azure.Commands.Compute.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot deserialize settings string from Sql Server extension. Updating your Azure PowerShell SDK to the latest version may solve this problem. Settings string:
+        ///   Looks up a localized string similar to Cannot find sql server configuration info in substatuses. Updating your Azure PowerShell SDK to the latest version may solve this problem. Substatuses string:
         ///{0}.
         /// </summary>
-        public static string AzureVMSqlServerWrongSettingsFormat {
+        public static string AzureVMSqlServerSqlConfigurationNotFound {
             get {
-                return ResourceManager.GetString("AzureVMSqlServerWrongSettingsFormat", resourceCulture);
+                return ResourceManager.GetString("AzureVMSqlServerSqlConfigurationNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot deserialize sql configuration substatus message from Sql Server extension. Updating your Azure PowerShell SDK to the latest version may solve this problem. Settings string:
+        ///{0}.
+        /// </summary>
+        public static string AzureVMSqlServerWrongConfigFormat {
+            get {
+                return ResourceManager.GetString("AzureVMSqlServerWrongConfigFormat", resourceCulture);
             }
         }
         
@@ -1072,6 +1082,24 @@ namespace Microsoft.Azure.Commands.Compute.Properties {
         public static string RemoveVmssDiagnosticsExtensionAction {
             get {
                 return ResourceManager.GetString("RemoveVmssDiagnosticsExtensionAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This cmdlet will remove the specified resource.  Do you want to continue?.
+        /// </summary>
+        public static string ResourceRemovalConfirmation {
+            get {
+                return ResourceManager.GetString("ResourceRemovalConfirmation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This cmdlet will stop the specified resource.  Do you want to continue?.
+        /// </summary>
+        public static string ResourceStoppingConfirmation {
+            get {
+                return ResourceManager.GetString("ResourceStoppingConfirmation", resourceCulture);
             }
         }
         

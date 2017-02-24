@@ -19,6 +19,12 @@
 -->
 ## Current Release
 
+## Version 2.6.0
+
+## Version 2.5.0
+
+## Version 2.4.0
+
 ## Version 2.3.0
 * Rename cmdlet Get-AzureRmBatchSubscriptionQuotas to Get-AzureRmBatchLocationsQuotas (an alias for the old command was created)
     - Rename return type PSBatchSubscriptionQuotas to PSBatchLocationQuotas (no property changes)
